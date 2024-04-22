@@ -1,3 +1,5 @@
+![image](https://github.com/chihirobelmo/ZundaWaters/assets/32677587/a1336c12-0aac-4272-b10a-bd5786f2174c)
+
 # ZundaWaters
 Casual Sub Sim for WebGL/PC
 

@@ -425,7 +425,7 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
     return o;
 }
 
-half4 BRDF0_Unity_PBS (half3 diffColor, half3 specColor, half oneMinusReflectivity, half smoothness,
+half4 BRDF0_Unity_PBS (FragmentCommonData s, half3 diffColor, half3 specColor, half oneMinusReflectivity, half smoothness,
     float3 normal, float3 viewDir,
     UnityLight light, UnityIndirect gi)
 {
@@ -501,8 +501,9 @@ half4 BRDF0_Unity_PBS (half3 diffColor, half3 specColor, half oneMinusReflectivi
     specularTerm *= any(specColor) ? 1.0 : 0.0;
 
     half grazingTerm = saturate(smoothness + (1-oneMinusReflectivity));
-    half3 color =   diffColor * (gi.diffuse + light.color * diffuseTerm)
-                    + specularTerm * light.color * FresnelTerm (specColor, lh)
+    float waterEffect = clamp(1.0 / (s.posWorld.y * 0.1), 0, 1);
+    half3 color =   diffColor * (gi.diffuse + light.color * diffuseTerm) * waterEffect
+                    + specularTerm * light.color * FresnelTerm (specColor, lh) * waterEffect
                     + surfaceReduction * gi.specular * FresnelLerp (specColor, grazingTerm, nv);
 
     return half4(color, 1);
@@ -523,7 +524,7 @@ half4 fragForwardBaseInternal (VertexOutputForwardBase i)
     half occlusion = Occlusion(i.tex.xy);
     UnityGI gi = FragmentGI (s, occlusion, i.ambientOrLightmapUV, atten, mainLight);
 
-    half4 c = BRDF0_Unity_PBS (s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, gi.light, gi.indirect);
+    half4 c = BRDF0_Unity_PBS (s, s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, gi.light, gi.indirect);
     c.rgb += Emission(i.tex.xy);
 
     UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);
@@ -614,7 +615,7 @@ half4 fragForwardAddInternal (VertexOutputForwardAdd i)
     UnityLight light = AdditiveLight (IN_LIGHTDIR_FWDADD(i), atten);
     UnityIndirect noIndirect = ZeroIndirect ();
 
-    half4 c = BRDF0_Unity_PBS (s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, light, noIndirect);
+    half4 c = BRDF0_Unity_PBS (s, s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, light, noIndirect);
 
     UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);
     UNITY_APPLY_FOG_COLOR(_unity_fogCoord, c.rgb, half4(0,0,0,0)); // fog towards black in additive pass
@@ -744,7 +745,7 @@ void fragDeferred (
 
     UnityGI gi = FragmentGI (s, occlusion, i.ambientOrLightmapUV, atten, dummyLight, sampleReflectionsInDeferred);
 
-    half3 emissiveColor = BRDF0_Unity_PBS (s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, gi.light, gi.indirect).rgb;
+    half3 emissiveColor = BRDF0_Unity_PBS (s, s.diffColor, s.specColor, s.oneMinusReflectivity, s.smoothness, s.normalWorld, -s.eyeVec, gi.light, gi.indirect).rgb;
 
     #ifdef _EMISSION
         emissiveColor += Emission (i.tex.xy);

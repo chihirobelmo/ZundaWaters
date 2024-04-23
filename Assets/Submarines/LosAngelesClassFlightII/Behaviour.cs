@@ -68,9 +68,10 @@ public class Behaviour : MonoBehaviour {
     // Update is called once per frame
     void Update()
     {
+
         // rotate propeller
-        transform.GetChild(0).GetChild(0).RotateAroundLocal(new Vector3(0, 0, 1), -1 * speed_kts / 80.0f);
-        transform.GetChild(0).GetChild(8).RotateAroundLocal(new Vector3(0, 0, 1), -1 * speed_kts / 80.0f);
+        transform.GetChild(0).GetChild(0).Rotate(transform.forward, -1 * speed_kts, Space.World);
+        transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * speed_kts, Space.World);
 
         OnUpdatePosition();
         OnSpeedChange();

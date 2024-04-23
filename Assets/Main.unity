@@ -32,13 +32,13 @@ RenderSettings:
   m_FlareFadeSpeed: 3
   m_HaloTexture: {fileID: 0}
   m_SpotCookie: {fileID: 10001, guid: 0000000000000000e000000000000000, type: 0}
-  m_DefaultReflectionMode: 1
+  m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 5
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 2aa182ed2190a054b999825d19c0d407, type: 3}
   m_Sun: {fileID: 380376549}
-  m_IndirectSpecularColor: {r: 0.016512536, g: 0.12136499, b: 0.20523414, a: 1}
+  m_IndirectSpecularColor: {r: 0.2755667, g: 0.37377763, b: 0.5343803, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -89,7 +89,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 1
-  m_LightingDataAsset: {fileID: 112000002, guid: 98d8a52d2785567489876350dfe3bbd6,
+  m_LightingDataAsset: {fileID: 112000002, guid: 144d64628a72b0b459ad9ef4f3009a49,
     type: 2}
   m_UseShadowmask: 0
 --- !u!196 &4

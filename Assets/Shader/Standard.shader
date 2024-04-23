@@ -1,5 +1,8 @@
-﻿Shader "Custom/UnderWater" {
-	Properties
+// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+
+Shader "Custom/Standard"
+{
+    Properties
     {
         _Color("Color", Color) = (1,1,1,1)
         _MainTex("Albedo", 2D) = "white" {}
@@ -87,7 +90,7 @@
 
             #pragma vertex vertBase
             #pragma fragment fragBase
-            #include "PBR.shader"
+            #include "UnityStandardCoreForward.cginc"
 
             ENDCG
         }
@@ -123,7 +126,7 @@
 
             #pragma vertex vertAdd
             #pragma fragment fragAdd
-            #include "PBR.shader"
+            #include "UnityStandardCoreForward.cginc"
 
             ENDCG
         }
@@ -188,7 +191,7 @@
             #pragma vertex vertDeferred
             #pragma fragment fragDeferred
 
-            #include "UnityStandardCore.cginc"
+            #include "UnityStandardCore.shader"
 
             ENDCG
         }
@@ -253,7 +256,7 @@
 
             #pragma vertex vertBase
             #pragma fragment fragBase
-            #include "PBR.shader"
+            #include "UnityStandardCoreForward.cginc"
 
             ENDCG
         }
@@ -285,7 +288,7 @@
 
             #pragma vertex vertAdd
             #pragma fragment fragAdd
-            #include "PBR.shader"
+            #include "UnityStandardCoreForward.cginc"
 
             ENDCG
         }

@@ -235,7 +235,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1684386398711034}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -1.8, z: 0}
   m_LocalScale: {x: 3.28084, y: 3.28084, z: 3.28084}
   m_Children:
   - {fileID: 4711468513694282}
@@ -297,7 +297,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1346778154232876}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.8436337, y: 4.064053, z: 4.6831775}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4202724740736730}
@@ -774,7 +774,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Size: {x: 1.24, y: 6.42, z: -7.77}
-  m_Center: {x: 0, y: 8.27, z: 15.24}
+  m_Center: {x: 0, y: 6.43, z: 15.24}
 --- !u!114 &114696005878584320
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -798,7 +798,7 @@ CapsuleCollider:
   m_Radius: 5
   m_Height: 110
   m_Direction: 2
-  m_Center: {x: 0, y: 0.55, z: -5.7}
+  m_Center: {x: 0, y: -1.16, z: -5.7}
 --- !u!215 &215554259076441332
 ReflectionProbe:
   m_ObjectHideFlags: 1

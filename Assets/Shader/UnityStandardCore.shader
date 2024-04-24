@@ -13,6 +13,7 @@
 #include "UnityStandardBRDF.cginc"
 
 #include "AutoLight.cginc"
+
 //-------------------------------------------------------------------------------------
 // counterpart for NormalizePerPixelNormal
 // skips normalization per-vertex and expects normalization to happen per-pixel
@@ -425,6 +426,24 @@ VertexOutputForwardBase vertForwardBase (VertexInput v)
     return o;
 }
 
+//-------------------------------------------------------------------------------------
+
+// Note: BRDF entry points use smoothness and oneMinusReflectivity for optimization
+// purposes, mostly for DX9 SM2.0 level. Most of the math is being done on these (1-x) values, and that saves
+// a few precious ALU slots.
+
+
+// Main Physically Based BRDF
+// Derived from Disney work and based on Torrance-Sparrow micro-facet model
+//
+//   BRDF = kD / pi + kS * (D * V * F) / 4
+//   I = BRDF * NdotL
+//
+// * NDF (depending on UNITY_BRDF_GGX):
+//  a) Normalized BlinnPhong
+//  b) GGX
+// * Smith for Visiblity term
+// * Schlick approximation for Fresnel
 half4 BRDF0_Unity_PBS (FragmentCommonData s, half3 diffColor, half3 specColor, half oneMinusReflectivity, half smoothness,
     float3 normal, float3 viewDir,
     UnityLight light, UnityIndirect gi)
@@ -501,10 +520,10 @@ half4 BRDF0_Unity_PBS (FragmentCommonData s, half3 diffColor, half3 specColor, h
     specularTerm *= any(specColor) ? 1.0 : 0.0;
 
     half grazingTerm = saturate(smoothness + (1-oneMinusReflectivity));
-    float waterEffect = clamp(1.0 / (s.posWorld.y * 0.1), 0, 1);
-    half3 color =   diffColor * (gi.diffuse + light.color * diffuseTerm) * waterEffect
+	float waterEffect = s.posWorld.y < 0 ? 1.0 + s.posWorld.y / 1 : 1.0;
+    half3 color =   diffColor * (gi.diffuse + light.color * diffuseTerm)
                     + specularTerm * light.color * FresnelTerm (specColor, lh) * waterEffect
-                    + surfaceReduction * gi.specular * FresnelLerp (specColor, grazingTerm, nv);
+                    + surfaceReduction * gi.specular * FresnelLerp (specColor, grazingTerm, nv) * waterEffect;
 
     return half4(color, 1);
 }

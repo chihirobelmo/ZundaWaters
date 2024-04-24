@@ -90,7 +90,7 @@ Shader "Custom/Standard"
 
             #pragma vertex vertBase
             #pragma fragment fragBase
-            #include "UnityStandardCoreForward.cginc"
+            #include "UnityStandardCoreForward.shader"
 
             ENDCG
         }
@@ -126,7 +126,7 @@ Shader "Custom/Standard"
 
             #pragma vertex vertAdd
             #pragma fragment fragAdd
-            #include "UnityStandardCoreForward.cginc"
+            #include "UnityStandardCoreForward.shader"
 
             ENDCG
         }
@@ -256,7 +256,7 @@ Shader "Custom/Standard"
 
             #pragma vertex vertBase
             #pragma fragment fragBase
-            #include "UnityStandardCoreForward.cginc"
+            #include "UnityStandardCoreForward.shader"
 
             ENDCG
         }
@@ -288,7 +288,7 @@ Shader "Custom/Standard"
 
             #pragma vertex vertAdd
             #pragma fragment fragAdd
-            #include "UnityStandardCoreForward.cginc"
+            #include "UnityStandardCoreForward.shader"
 
             ENDCG
         }

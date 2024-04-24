@@ -520,7 +520,8 @@ half4 BRDF0_Unity_PBS (FragmentCommonData s, half3 diffColor, half3 specColor, h
     specularTerm *= any(specColor) ? 1.0 : 0.0;
 
     half grazingTerm = saturate(smoothness + (1-oneMinusReflectivity));
-	float waterEffect = s.posWorld.y < 0 ? 1.0 + s.posWorld.y / 1 : 1.0;
+	float waterEffect = s.posWorld.y < 0 ? 1.0 + s.posWorld.y / 100 : 1.0;
+	waterEffect < 0.5 ? 0.5 : waterEffect;
     half3 color =   diffColor * (gi.diffuse + light.color * diffuseTerm)
                     + specularTerm * light.color * FresnelTerm (specColor, lh) * waterEffect
                     + surfaceReduction * gi.specular * FresnelLerp (specColor, grazingTerm, nv) * waterEffect;

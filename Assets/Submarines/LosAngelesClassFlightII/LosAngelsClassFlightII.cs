@@ -23,7 +23,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
     }
 
     const float KTS_TO_MPS = 1.94384f;
-    float balast = -9.8f;
+    float gravity = 9.8f;
+    float balast = -9.8f * 2.0f;
     float thrust = 100.0f; // m/s2
     float fallspeed = 0.0f;
     readonly float mass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
@@ -33,9 +34,43 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     void CalcVelocity() { velocityMPS += (
             transform.forward * VtPerDt(mass, mass, thrust, velocityMPS.magnitude)
-            - transform.right * SpeedToVector(velocityMPS, transform.right) // remove
-            - transform.up * SpeedToVector(velocityMPS, transform.up) // remove
+            - transform.right * SpeedToVector(velocityMPS, transform.right) // cancel inertia
+            - transform.up * SpeedToVector(velocityMPS, transform.up) // remove inertia
+            // help me for good calc method to cancel inertia.
             ) * Time.deltaTime; }
+
+    void CalcGravityAndFloat() {
+
+       // gravity for each cell
+
+       IEnumerable < Vector3 > eachCellOfShip =
+           from z in new int[] { -50 -25, 0, 25, 50 }
+           from y in new int[] { -2, 2, 5 }
+           from x in new int[] { -5, 5 }
+           select transform.GetChild(0).position + 
+           transform.GetChild(0).forward * z + 
+           transform.GetChild(0).up * y + 
+           transform.GetChild(0).right * x;
+
+       int cellCount = eachCellOfShip.Count();
+
+        eachCellOfShip.ToList().ForEach(p =>
+        {
+            float offset = (p.z - transform.GetChild(0).position.z);
+            if (p.y > 0)
+            { // under water
+                velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
+                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
+            }
+            if (p.y <= 0)
+            { // under water
+                velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
+                velocityMPS.y -= balast * Time.deltaTime * (1.0f / cellCount); // float
+                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
+                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * balast * offset * Time.deltaTime * -1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
+            }
+        });
+    }
 
     void OnUpdatePosition() {
         transform.position += velocityMPS * Time.deltaTime;
@@ -43,11 +78,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     void OnUpdateOrientation()
     {
-        transform.rotation *= Quaternion.Euler(angularSpeed_rad * Time.deltaTime);
         // yaw
-        //transform.rotation *= Quaternion.Euler(angularSpeed_rad * Time.deltaTime);
+        transform.rotation *= Quaternion.Euler(angularSpeed_rad * Time.deltaTime);
         // roll fixed 0
         transform.rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, 0);
+
         //if (transform.eulerAngles.x > 180.0f && transform.eulerAngles.x < 330.0f)
         //{
         //    if (angularSpeed_rad.x < 0)
@@ -59,18 +94,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
         //        angularSpeed_rad.x -= 30.0f * Time.deltaTime;
         //}
     }
-
-    float CalcPitch(Transform transform)
-    {
-        Matrix4x4 M = transform.worldToLocalMatrix;
-        return Mathf.Atan2(-M.m10, Mathf.Sqrt(M.m01 * M.m01 + M.m00 * M.m00));
-    }
-
-    /*
-    roll = atan2(M[1][2], M[1][1])
-    pitch = atan2(-M[1][0], sqrt(M[0][1] * M[0][1] + M[0][0] * M[0][0]))
-    yaw = atan2(M[2][0], M[0][0])
-    */
 
     void ChangeAndLimitThrust(float add)
     {
@@ -90,18 +113,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
         angularSpeed_rad.x = angularSpeed_rad.x > 10.0f ? 10.0f : angularSpeed_rad.x < -10.0f ? -10.0f : angularSpeed_rad.x;
     }
 
-    const float k = 100f;
-    const float m = 15000f;
     Vector3 lastPosition;
     float speed_mps = 0; // only for update.
-
-    float[] floatArray(float start, float end, float step) {
-        List<float> r = new List<float>();
-        for (float f = start; f <= end; f += step) {
-            r.Add(f);
-        }
-        return r.ToArray();
-    }
 
     void updateInfo()
     {
@@ -120,6 +133,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
 
         CalcVelocity();
+        CalcGravityAndFloat();
         OnUpdatePosition();
         OnUpdateOrientation();
 
@@ -130,8 +144,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
             { KeyCode.D, () => { ChangeAndLimitYawAngularSpeed(+30.0f * Time.deltaTime); } },
             { KeyCode.W, () => { ChangeAndLimitPitch(+30.0f * Time.deltaTime); } },
             { KeyCode.S, () => { ChangeAndLimitPitch(-30.0f * Time.deltaTime); } },
-            { KeyCode.E, () => { balast += 1.0f * Time.deltaTime; } },
-            { KeyCode.C, () => { balast -= 1.0f * Time.deltaTime; } },
+            { KeyCode.E, () => { balast -= 3.0f * Time.deltaTime; } },
+            { KeyCode.C, () => { balast += 3.0f * Time.deltaTime; } },
         }
         .ToList()
         .Select(x => { if (Input.GetKey(x.Key)) x.Value(); return 0; })
@@ -141,7 +155,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        //speed_kts = 0.0f;
     }
 
     private void OnCollisionStay(Collision collision)
@@ -152,28 +165,3 @@ public class LosAngelsClassFlightII : MonoBehaviour
     {
     }
 }
-
-
-// gravity for each cell
-//IEnumerable<Vector3> eachCellOfShip =
-//    from z in new int[] { -50, 50 }
-//    from y in floatArray(-10, 10, 0.01f)
-//    from x in new int[] { -1, 1 }
-//    select transform.GetChild(0).position + transform.GetChild(0).forward * z + transform.GetChild(0).up * y + transform.GetChild(0).right * x;
-
-//int cellCount = eachCellOfShip.Count();
-
-//eachCellOfShip.ToList().ForEach(p => {
-//    float offset = (p.z - transform.GetChild(0).position.z);
-//    if (p.y > 0)
-//    { // under water
-//        fallspeed += VtPerDt(100f, weight * (1.0f / cellCount), 9.8f, fallspeed) * Time.deltaTime;
-//        gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * (9.8f - balast) * offset * Time.deltaTime * -1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
-//    }
-//    if (p.y <= 0)
-//    { // under water
-//        fallspeed += VtPerDt(500000f, weight * (1.0f / cellCount), 9.8f, fallspeed) * Time.deltaTime;
-//        fallspeed += VtPerDt(500000f, weight * (1.0f / cellCount), - (9.8f - balast), fallspeed) * Time.deltaTime;
-//        gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * (9.8f - balast) * offset * Time.deltaTime * -1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
-//    }
-//});

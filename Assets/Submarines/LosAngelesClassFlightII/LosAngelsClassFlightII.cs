@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,7 +11,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
     {
         velocityMPS = transform.forward * 5.0f * KTS_TO_MPS;
         lastPosition = transform.position;
-        GetComponent<Rigidbody>().drag = 1.0f;
     }
 
     public static float VtPerDt(float k, float m, float a, float v)
@@ -18,111 +18,125 @@ public class LosAngelsClassFlightII : MonoBehaviour
         return (-k / m) * (v * v - m * a / k);
     }
 
-    public static float SpeedToVector(Vector3 source, Vector3 vector) {
-        return source.x * vector.normalized.x + source.y * vector.normalized.y + source.z * vector.normalized.z;
+    /// <summary>
+    /// The matrix of a proper rotation "r" by angle θ around the axis "n"
+    /// 
+    /// usage : RotationAroundAxis(n).(theta).(r);
+    /// </summary>
+    /// <param name="n">target vector</param>
+    /// <returns>effect for vector "r"</returns>
+    public static Func<float, Func<Vector3, Vector3>> RotationAroundAxis(Vector3 n) {
+        return (float theta) => {
+            return (Vector3 r) => {
+                return r * (float)Math.Cos(theta) + n * Vector3.Dot(n, r) * (1 - (float)Math.Cos(theta)) + Vector3.Cross(n, r) * (float)Math.Sin(theta);
+            };
+        };
     }
 
     const float KTS_TO_MPS = 1.94384f;
     float gravity = 9.8f;
     float ballast = -9.8f * 2.0f;
-    float thrust = 100.0f; // m/s2
+    float thrust = 5.0f; // m/s2
     float fallspeed = 0.0f;
     readonly float mass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
-    Vector3 velocityMPS = new Vector3(0, 0, 0);
-    Vector3 gravityMoment = new Vector3(0, 0, 0);
-    Vector3 angularSpeed_rad = new Vector3(0, 0, 0);
+    readonly float waterDrag = 50000f;
+    Vector3 velocityMPS;
+    Vector3 gravityVelocityMPS;
+    Vector3 gravityAngularRad;
+    Vector3 gravityMoment;
+    Vector3 angularSpeedRad;
+    Vector3 lastPosition;
+    Vector3 vector;
 
-    void CalcVelocity() { velocityMPS += (
-            transform.forward * VtPerDt(mass, mass, thrust, velocityMPS.magnitude)
-            - transform.right * SpeedToVector(velocityMPS, transform.right) // cancel inertia
-            - transform.up * SpeedToVector(velocityMPS, transform.up) // remove inertia
-            // help me for good calc method to cancel inertia.
-            ) * Time.deltaTime; }
+    void updateInfo()
+    {
+        vector = lastPosition - transform.position;
+        gravityMoment = new Vector3(0, 0, 0);
+        lastPosition = transform.GetChild(0).position;
+    }
+
+    void UpdateVelocity()
+    {
+        if ((transform.position + transform.forward * -50.0f).y <= 0)
+        {
+            velocityMPS += transform.forward * VtPerDt(waterDrag, mass, thrust, velocityMPS.magnitude) * Time.deltaTime;
+        }
+        velocityMPS += (transform.forward * velocityMPS.magnitude - velocityMPS) * Time.deltaTime;
+    }
+
+    void UpdatePosition()
+    {
+        transform.position += (velocityMPS + gravityVelocityMPS) * Time.deltaTime;
+    }
 
     void CalcGravityAndFloat() {
 
        // gravity for each cell
 
        IEnumerable < Vector3 > eachCellOfShip =
-           from z in new int[] { -50 -25, 0, 25, 50 }
-           from y in new int[] { -2, 2, 5 }
-           from x in new int[] { -5, 5 }
-           select transform.GetChild(0).position + 
-           transform.GetChild(0).forward * z + 
-           transform.GetChild(0).up * y + 
-           transform.GetChild(0).right * x;
+           from z in Enumerable.Range(-55,55)
+           from y in Enumerable.Range(-2, 10)
+           select transform.position + 
+           transform.forward * z + transform.up * y;
 
-       int cellCount = eachCellOfShip.Count();
+        int cellCount = eachCellOfShip.Count();
+        gravityAngularRad.x = 0;
+
+        float kpm = 50000/mass;
 
         eachCellOfShip.ToList().ForEach(p =>
         {
-            float offset = (p.z - transform.GetChild(0).position.z);
+            float offset = (p.z - transform.position.z);
             if (p.y > 0)
             { // in air
-                velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
-                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
+                gravityVelocityMPS.y += VtPerDt(waterDrag, mass, -gravity, gravityVelocityMPS.y) * Time.deltaTime * (1.0f / cellCount); // gravity
+                gravityAngularRad.x += gravity * offset * Time.deltaTime * (1.0f / cellCount);
             }
             if (p.y <= 0)
             { // under water
-                velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
-                velocityMPS.y -= ballast * Time.deltaTime * (1.0f / cellCount); // float
-                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
-                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * ballast * offset * Time.deltaTime * -1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
+                gravityVelocityMPS.y += VtPerDt(waterDrag, mass, - gravity - ballast, gravityVelocityMPS.y) * Time.deltaTime * (1.0f / cellCount); // gravity
+                gravityAngularRad.x += (gravity + ballast) * offset * Time.deltaTime * (1.0f / cellCount);
             }
         });
     }
 
-    void OnUpdatePosition() {
-        transform.position += velocityMPS * Time.deltaTime;
-    }
-
-    void OnUpdateOrientation()
+    void UpdateOrientaion()
     {
         // yaw
-        transform.rotation *= Quaternion.Euler(angularSpeed_rad * Time.deltaTime);
+        transform.rotation *= Quaternion.Euler((angularSpeedRad + gravityAngularRad) * Time.deltaTime);
         // roll fixed 0
         transform.rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, 0);
-        transform.GetChild(0).rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, -angularSpeed_rad.y);
+        //transform.GetChild(0).rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, -angularSpeed_rad.y);
     }
 
     void ChangeAndLimitThrust(float add)
     {
         thrust += add;
-        thrust = thrust > 400.0f ? 400.0f : thrust < -50.0f ? -50.0f : thrust;
+        thrust = thrust > 5.0f ? 5.0f : thrust < -1.0f ? -1.0f : thrust;
     }
 
     void ChangeAndLimitYawAngularSpeed(float add)
     {
-        angularSpeed_rad.y += add;
-        angularSpeed_rad.y = angularSpeed_rad.y > 30.0f ? 30.0f : angularSpeed_rad.y < -30.0f ? -30.0f : angularSpeed_rad.y;
+        angularSpeedRad.y += add;
+        angularSpeedRad.y = angularSpeedRad.y > 30.0f ? 30.0f : angularSpeedRad.y < -30.0f ? -30.0f : angularSpeedRad.y;
     }
 
     void ChangeAndLimitPitchAngularSpeed(float add)
     {
-        angularSpeed_rad.x += add;
-        angularSpeed_rad.x = angularSpeed_rad.x > 10.0f ? 10.0f : angularSpeed_rad.x < -10.0f ? -10.0f : angularSpeed_rad.x;
+        angularSpeedRad.x += add * velocityMPS.magnitude;
+        angularSpeedRad.x = angularSpeedRad.x > 10.0f ? 10.0f : angularSpeedRad.x < -10.0f ? -10.0f : angularSpeedRad.x;
 
         // limit pitch angle
         if (transform.eulerAngles.x > 180.0f && transform.eulerAngles.x < 330.0f)
         {
-            if (angularSpeed_rad.x < 0)
-                angularSpeed_rad.x += 30.0f * Time.deltaTime;
+            if (angularSpeedRad.x < 0)
+                angularSpeedRad.x += 30.0f * Time.deltaTime;
         }
         if (transform.eulerAngles.x < 180.0f && transform.eulerAngles.x > 30.0f)
         {
-            if (angularSpeed_rad.x > 0)
-                angularSpeed_rad.x -= 30.0f * Time.deltaTime;
+            if (angularSpeedRad.x > 0)
+                angularSpeedRad.x -= 30.0f * Time.deltaTime;
         }
-    }
-
-    Vector3 lastPosition;
-    float speed_mps = 0; // only for update.
-
-    void updateInfo()
-    {
-        speed_mps = (lastPosition - transform.position).magnitude;
-        gravityMoment = new Vector3(0, 0, 0);
-        lastPosition = transform.GetChild(0).position;
     }
 
     // Update is called once per frame
@@ -134,20 +148,21 @@ public class LosAngelsClassFlightII : MonoBehaviour
         transform.GetChild(0).GetChild(0).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
         transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
 
-        CalcVelocity();
+        UpdateVelocity();
         CalcGravityAndFloat();
-        OnUpdatePosition();
-        OnUpdateOrientation();
+        UpdatePosition();
+        UpdateOrientaion();
 
         new Dictionary<KeyCode, System.Action> {
-            { KeyCode.Q, () => { ChangeAndLimitThrust(+100.0f * Time.deltaTime); } },
-            { KeyCode.Z, () => { ChangeAndLimitThrust(-100.0f * Time.deltaTime); } },
+            { KeyCode.Q, () => { ChangeAndLimitThrust(+0.5f * Time.deltaTime); } },
+            { KeyCode.Z, () => { ChangeAndLimitThrust(-0.5f * Time.deltaTime); } },
             { KeyCode.A, () => { ChangeAndLimitYawAngularSpeed(-30.0f * Time.deltaTime); } },
             { KeyCode.D, () => { ChangeAndLimitYawAngularSpeed(+30.0f * Time.deltaTime); } },
             { KeyCode.W, () => { ChangeAndLimitPitchAngularSpeed(+30.0f * Time.deltaTime); } },
             { KeyCode.S, () => { ChangeAndLimitPitchAngularSpeed(-30.0f * Time.deltaTime); } },
             { KeyCode.E, () => { ballast += ballast <= -19.6f ? -ballast-19.6f : -6.0f * Time.deltaTime; } },
             { KeyCode.C, () => { ballast += ballast >= +9.80f ? -ballast+9.80f : +3.0f * Time.deltaTime; } },
+            { KeyCode.X, () => { angularSpeedRad *= 0.0f; } },
         }
         .ToList()
         .Select(x => { if (Input.GetKey(x.Key)) x.Value(); return 0; })

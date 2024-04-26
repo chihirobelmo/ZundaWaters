@@ -147,8 +147,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
             { KeyCode.D, () => { ChangeAndLimitYawAngularSpeed(+30.0f * Time.deltaTime); } },
             { KeyCode.W, () => { ChangeAndLimitPitchAngularSpeed(+30.0f * Time.deltaTime); } },
             { KeyCode.S, () => { ChangeAndLimitPitchAngularSpeed(-30.0f * Time.deltaTime); } },
-            { KeyCode.E, () => { ballastAir += ballastAir >= 9.9f ? 9.9f : +0.1f * Time.deltaTime; } },
-            { KeyCode.C, () => { ballastAir += ballastAir <= 9.6f ? 9.6f : -0.1f * Time.deltaTime; } },
+            { KeyCode.E, () => { ballastAir = ballastAir >= 9.9f ? 9.9f : ballastAir +0.1f * Time.deltaTime; } },
+            { KeyCode.C, () => { ballastAir = ballastAir <= 9.6f ? 9.6f : ballastAir -0.1f * Time.deltaTime; } },
             { KeyCode.X, () => { angularSpeedDeg *= 0.0f; ballastAir = -9.8f; } },
         }
         .ToList()

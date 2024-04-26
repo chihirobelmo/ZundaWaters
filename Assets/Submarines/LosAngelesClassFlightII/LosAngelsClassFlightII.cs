@@ -24,7 +24,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     const float KTS_TO_MPS = 1.94384f;
     float gravity = 9.8f;
-    float balast = -9.8f * 2.0f;
+    float ballast = -9.8f * 2.0f;
     float thrust = 100.0f; // m/s2
     float fallspeed = 0.0f;
     readonly float mass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
@@ -58,16 +58,16 @@ public class LosAngelsClassFlightII : MonoBehaviour
         {
             float offset = (p.z - transform.GetChild(0).position.z);
             if (p.y > 0)
-            { // under water
+            { // in air
                 velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
-                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
+                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
             }
             if (p.y <= 0)
             { // under water
                 velocityMPS.y -= gravity * Time.deltaTime * (1.0f / cellCount); // gravity
-                velocityMPS.y -= balast * Time.deltaTime * (1.0f / cellCount); // float
-                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
-                gravityMoment += Mathf.Deg2Rad * Quaternion.Euler(transform.GetChild(0).forward * balast * offset * Time.deltaTime * -1.0f).eulerAngles * Time.deltaTime * (1.0f / cellCount);
+                velocityMPS.y -= ballast * Time.deltaTime * (1.0f / cellCount); // float
+                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * gravity * offset * Time.deltaTime * +1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
+                transform.rotation *= Quaternion.Euler(transform.GetChild(0).forward * ballast * offset * Time.deltaTime * -1.0f * Time.deltaTime * (1.0f / cellCount) * 6.0f);
             }
         });
     }
@@ -82,23 +82,13 @@ public class LosAngelsClassFlightII : MonoBehaviour
         transform.rotation *= Quaternion.Euler(angularSpeed_rad * Time.deltaTime);
         // roll fixed 0
         transform.rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, 0);
-
-        //if (transform.eulerAngles.x > 180.0f && transform.eulerAngles.x < 330.0f)
-        //{
-        //    if (angularSpeed_rad.x < 0)
-        //        angularSpeed_rad.x += 30.0f * Time.deltaTime;
-        //}
-        //if (transform.eulerAngles.x < 180.0f && transform.eulerAngles.x > 30.0f)
-        //{
-        //    if (angularSpeed_rad.x > 0)
-        //        angularSpeed_rad.x -= 30.0f * Time.deltaTime;
-        //}
+        transform.GetChild(0).rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, -angularSpeed_rad.y);
     }
 
     void ChangeAndLimitThrust(float add)
     {
         thrust += add;
-        thrust = thrust > 30.0f ? 30.0f : thrust < -5.0f ? -5.0f : thrust;
+        thrust = thrust > 400.0f ? 400.0f : thrust < -50.0f ? -50.0f : thrust;
     }
 
     void ChangeAndLimitYawAngularSpeed(float add)
@@ -107,10 +97,22 @@ public class LosAngelsClassFlightII : MonoBehaviour
         angularSpeed_rad.y = angularSpeed_rad.y > 30.0f ? 30.0f : angularSpeed_rad.y < -30.0f ? -30.0f : angularSpeed_rad.y;
     }
 
-    void ChangeAndLimitPitch(float add)
+    void ChangeAndLimitPitchAngularSpeed(float add)
     {
         angularSpeed_rad.x += add;
         angularSpeed_rad.x = angularSpeed_rad.x > 10.0f ? 10.0f : angularSpeed_rad.x < -10.0f ? -10.0f : angularSpeed_rad.x;
+
+        // limit pitch angle
+        if (transform.eulerAngles.x > 180.0f && transform.eulerAngles.x < 330.0f)
+        {
+            if (angularSpeed_rad.x < 0)
+                angularSpeed_rad.x += 30.0f * Time.deltaTime;
+        }
+        if (transform.eulerAngles.x < 180.0f && transform.eulerAngles.x > 30.0f)
+        {
+            if (angularSpeed_rad.x > 0)
+                angularSpeed_rad.x -= 30.0f * Time.deltaTime;
+        }
     }
 
     Vector3 lastPosition;
@@ -138,14 +140,14 @@ public class LosAngelsClassFlightII : MonoBehaviour
         OnUpdateOrientation();
 
         new Dictionary<KeyCode, System.Action> {
-            { KeyCode.Q, () => { ChangeAndLimitThrust(+0.1f * Time.deltaTime); } },
-            { KeyCode.Z, () => { ChangeAndLimitThrust(-0.1f * Time.deltaTime); } },
+            { KeyCode.Q, () => { ChangeAndLimitThrust(+100.0f * Time.deltaTime); } },
+            { KeyCode.Z, () => { ChangeAndLimitThrust(-100.0f * Time.deltaTime); } },
             { KeyCode.A, () => { ChangeAndLimitYawAngularSpeed(-30.0f * Time.deltaTime); } },
             { KeyCode.D, () => { ChangeAndLimitYawAngularSpeed(+30.0f * Time.deltaTime); } },
-            { KeyCode.W, () => { ChangeAndLimitPitch(+30.0f * Time.deltaTime); } },
-            { KeyCode.S, () => { ChangeAndLimitPitch(-30.0f * Time.deltaTime); } },
-            { KeyCode.E, () => { balast -= 3.0f * Time.deltaTime; } },
-            { KeyCode.C, () => { balast += 3.0f * Time.deltaTime; } },
+            { KeyCode.W, () => { ChangeAndLimitPitchAngularSpeed(+30.0f * Time.deltaTime); } },
+            { KeyCode.S, () => { ChangeAndLimitPitchAngularSpeed(-30.0f * Time.deltaTime); } },
+            { KeyCode.E, () => { ballast += ballast <= -19.6f ? -ballast-19.6f : -6.0f * Time.deltaTime; } },
+            { KeyCode.C, () => { ballast += ballast >= +9.80f ? -ballast+9.80f : +3.0f * Time.deltaTime; } },
         }
         .ToList()
         .Select(x => { if (Input.GetKey(x.Key)) x.Value(); return 0; })

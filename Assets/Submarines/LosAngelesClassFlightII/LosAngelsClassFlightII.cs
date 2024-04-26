@@ -9,14 +9,18 @@ public class LosAngelsClassFlightII : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        thrust = transform.forward * 1.0f;
         velocityMPS = transform.forward * 5.0f * KTS_TO_MPS;
         lastPosition = transform.position;
     }
 
     public static float VtPerDt(float k, float m, float a, float v)
     {
-        return (-k / m) * (v * v - m * Mathf.Abs(a) / k);
+        return (-k / m) * (v - m * a / k);
+    }
+
+    public static Vector3 VtPerDt(float k, float m, Vector3 a, Vector3 v)
+    {
+        return (-k / m) * (v - m * a / k);
     }
 
     const float KTS_TO_MPS = 1.94384f;
@@ -25,7 +29,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
     const float waterDrag = 500000f;
     const float airDrag = 100000f;
     [SerializeField] float ballastAir = 9.8f;
-    [SerializeField] Vector3 thrust; // m/s2
+    [SerializeField] float thrust = 1.0f;
     [SerializeField] Vector3 velocityMPS;
     [SerializeField] Vector3 gravityVelocityMPS;
     [SerializeField] Vector3 gravityAngularDeg;
@@ -36,7 +40,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     void updateInfo()
     {
-        thrust = transform.forward * thrust.magnitude;
         vector = lastPosition - transform.position;
         lastPosition = transform.position;
         lastVector = vector;
@@ -46,11 +49,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
     {
         if ((transform.position + transform.forward * -50.0f).y <= 0)
         {
-            velocityMPS += new Vector3(
-                VtPerDt(waterDrag, mass, thrust.x, velocityMPS.x) * Time.deltaTime,
-                VtPerDt(waterDrag, mass, thrust.y, velocityMPS.y) * Time.deltaTime,
-                VtPerDt(waterDrag, mass, thrust.z, velocityMPS.z) * Time.deltaTime
-                );
+            velocityMPS += VtPerDt(waterDrag, mass, transform.forward * thrust, velocityMPS) * Time.deltaTime;
         }
         //velocityMPS += (transform.forward * velocityMPS.magnitude - velocityMPS) * Time.deltaTime; // cancel inartia bit by a bit
     }
@@ -99,8 +98,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     void ChangeAndLimitThrust(float add)
     {
-        thrust += thrust.normalized * add;
-        thrust = thrust.normalized * (thrust.magnitude > 20.0f ? 20.0f : thrust.magnitude < -5.0f ? -5.0f : thrust.magnitude);
+        thrust += thrust * add;
+        thrust = thrust > 20.0f ? 20.0f : thrust < -5.0f ? -5.0f : thrust;
     }
 
     void ChangeAndLimitYawAngularSpeed(float add)
@@ -133,8 +132,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
         updateInfo();
 
         // rotate propeller
-        transform.GetChild(0).GetChild(0).Rotate(transform.forward, -1 * thrust.magnitude * 40.0f, Space.World);
-        transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * thrust.magnitude * 40.0f, Space.World);
+        transform.GetChild(0).GetChild(0).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
+        transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
 
         UpdateVelocity();
         CalcGravityAndFloat();

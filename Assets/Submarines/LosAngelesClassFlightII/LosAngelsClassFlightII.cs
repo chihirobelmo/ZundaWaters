@@ -30,6 +30,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
     const float airDrag = 100000f;
     [SerializeField] float ballastAir = 9.8f;
     [SerializeField] float thrust = 1.0f;
+    [SerializeField] Vector3 accelerationMPS;
     [SerializeField] Vector3 velocityMPS;
     [SerializeField] Vector3 gravityVelocityMPS;
     [SerializeField] Vector3 gravityAngularDeg;
@@ -45,18 +46,27 @@ public class LosAngelsClassFlightII : MonoBehaviour
         lastVector = vector;
     }
 
-    void UpdateVelocity()
+    void UpdateAcceleration(float k, float m)
     {
         if ((transform.position + transform.forward * -50.0f).y <= 0)
         {
-            velocityMPS += VtPerDt(waterDrag, mass, transform.forward * thrust, velocityMPS) * Time.deltaTime;
+            accelerationMPS += (-k / m) * (velocityMPS - m * accelerationMPS / k) ;
+        }
+        
+    }
+
+    void UpdateVelocity(float k, float m)
+    {
+        if ((transform.position + transform.forward * -50.0f).y <= 0)
+        {
+            velocityMPS += accelerationMPS * Time.deltaTime;
         }
         //velocityMPS += (transform.forward * velocityMPS.magnitude - velocityMPS) * Time.deltaTime; // cancel inartia bit by a bit
     }
 
     void UpdatePosition()
     {
-        transform.position += (velocityMPS + gravityVelocityMPS) * Time.deltaTime;
+        transform.position += velocityMPS * Time.deltaTime;
     }
 
     void CalcGravityAndFloat() {
@@ -75,12 +85,12 @@ public class LosAngelsClassFlightII : MonoBehaviour
             float offset = (p.z - transform.position.z);
             if (p.y > 0)
             { // in air
-                gravityVelocityMPS += -Vector3.up * VtPerDt(airDrag, mass, gravity, gravityVelocityMPS.magnitude) * Time.deltaTime * (1.0f / cellCount);
+                VelocityMPS += -Vector3.up * UpdateAcceleration(airDrag, mass) * Time.deltaTime * (1.0f / cellCount);
                 gravityAngularDeg.x += Mathf.Rad2Deg * (2.0f * Mathf.PI / 60.0f) * gravity * offset * Time.deltaTime * (1.0f / cellCount);
             }
             if (p.y <= 0)
             { // under water
-                gravityVelocityMPS += (gravity - ballastAir > 0 ? - Vector3.up : Vector3.up) * VtPerDt(airDrag, mass, Mathf.Abs(gravity - ballastAir), gravityVelocityMPS.magnitude) * Time.deltaTime * (1.0f / cellCount);
+                VelocityMPS += -Vector3.up * (UpdateAcceleration(airDrag, mass) + (gravity - ballastAir))* Time.deltaTime * (1.0f / cellCount);
                 gravityAngularDeg.x += Mathf.Rad2Deg * (2.0f * Mathf.PI / 60.0f) * (gravity - ballastAir) * offset * Time.deltaTime * (1.0f / cellCount);
             }
         });
@@ -135,6 +145,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         transform.GetChild(0).GetChild(0).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
         transform.GetChild(0).GetChild(8).Rotate(transform.forward, -1 * thrust * 40.0f, Space.World);
 
+        UpdateAcceleration();
         UpdateVelocity();
         CalcGravityAndFloat();
         UpdatePosition();

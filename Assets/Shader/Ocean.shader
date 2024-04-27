@@ -156,7 +156,7 @@
             jacobian = min(1, max(0, (-jacobian + _FoamBiasLOD0) * _FoamScale));
             #endif
 
-            float2 screenUV = IN.screenPos.xy / (0.001 + IN.screenPos.w);
+            float2 screenUV = IN.screenPos.xy / IN.screenPos.w;
             float backgroundDepth =
                 LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV));
             float surfaceDepth = UNITY_Z_0_FAR_FROM_CLIPSPACE(IN.screenPos.z);

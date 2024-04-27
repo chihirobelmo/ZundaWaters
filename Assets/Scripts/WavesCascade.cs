@@ -3,25 +3,33 @@ using UnityEngine;
 
 public class WavesCascade
 {
-    public int size;
-    public ComputeShader initialSpectrumShader;
-    public ComputeShader timeDependentSpectrumShader;
-    public ComputeShader texturesMergerShader;
-    public FastFourierTransform fft;
-    public Texture2D GaussianNoise;
-    public ComputeBuffer paramsBuffer;
-    public RenderTexture InitialSpectrum;
-    public RenderTexture PrecomputedData;
+    public RenderTexture Displacement => displacement;
+    public RenderTexture Derivatives => derivatives;
+    public RenderTexture Turbulence => turbulence;
 
-    public RenderTexture buffer;
-    public RenderTexture DxDz;
-    public RenderTexture DyDxz;
-    public RenderTexture DyxDyz;
-    public RenderTexture DxxDzz;
+    public Texture2D GaussianNoise => gaussianNoise;
+    public RenderTexture PrecomputedData => precomputedData;
+    public RenderTexture InitialSpectrum => initialSpectrum;
 
-    public RenderTexture Displacement;
-    public RenderTexture Derivatives;
-    public RenderTexture Turbulence;
+    readonly int size;
+    readonly ComputeShader initialSpectrumShader;
+    readonly ComputeShader timeDependentSpectrumShader;
+    readonly ComputeShader texturesMergerShader;
+    readonly FastFourierTransform fft;
+    readonly Texture2D gaussianNoise;
+    readonly ComputeBuffer paramsBuffer;
+    readonly RenderTexture initialSpectrum;
+    readonly RenderTexture precomputedData;
+    
+    readonly RenderTexture buffer;
+    readonly RenderTexture DxDz;
+    readonly RenderTexture DyDxz;
+    readonly RenderTexture DyxDyz;
+    readonly RenderTexture DxxDzz;
+
+    readonly RenderTexture displacement;
+    readonly RenderTexture derivatives;
+    readonly RenderTexture turbulence;
 
     float lambda;
 
@@ -37,18 +45,18 @@ public class WavesCascade
         this.timeDependentSpectrumShader = timeDependentSpectrumShader;
         this.texturesMergerShader = texturesMergerShader;
         this.fft = fft;
-        this.GaussianNoise = gaussianNoise;
+        this.gaussianNoise = gaussianNoise;
 
         KERNEL_INITIAL_SPECTRUM = initialSpectrumShader.FindKernel("CalculateInitialSpectrum");
         KERNEL_CONJUGATE_SPECTRUM = initialSpectrumShader.FindKernel("CalculateConjugatedSpectrum");
         KERNEL_TIME_DEPENDENT_SPECTRUMS = timeDependentSpectrumShader.FindKernel("CalculateAmplitudes");
         KERNEL_RESULT_TEXTURES = texturesMergerShader.FindKernel("FillResultTextures");
 
-        InitialSpectrum = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
-        PrecomputedData = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
-        Displacement = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
-        Derivatives = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat, true);
-        Turbulence = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat, true);
+        initialSpectrum = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
+        precomputedData = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
+        displacement = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat);
+        derivatives = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat, true);
+        turbulence = FastFourierTransform.CreateRenderTexture(size, RenderTextureFormat.ARGBFloat, true);
         paramsBuffer = new ComputeBuffer(2, 8 * sizeof(float));
 
         buffer = FastFourierTransform.CreateRenderTexture(size);
@@ -60,8 +68,7 @@ public class WavesCascade
 
     public void Dispose()
     {
-        if ( paramsBuffer != null )
-        { paramsBuffer.Release(); }
+        paramsBuffer?.Release();
     }
 
     public void CalculateInitials(WavesSettings wavesSettings, float lengthScale,
@@ -76,11 +83,11 @@ public class WavesCascade
         wavesSettings.SetParametersToShader(initialSpectrumShader, KERNEL_INITIAL_SPECTRUM, paramsBuffer);
 
         initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, H0K_PROP, buffer);
-        initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, PRECOMPUTED_DATA_PROP, PrecomputedData);
-        initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, NOISE_PROP, GaussianNoise);
+        initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, PRECOMPUTED_DATA_PROP, precomputedData);
+        initialSpectrumShader.SetTexture(KERNEL_INITIAL_SPECTRUM, NOISE_PROP, gaussianNoise);
         initialSpectrumShader.Dispatch(KERNEL_INITIAL_SPECTRUM, size / LOCAL_WORK_GROUPS_X, size / LOCAL_WORK_GROUPS_Y, 1);
 
-        initialSpectrumShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, H0_PROP, InitialSpectrum);
+        initialSpectrumShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, H0_PROP, initialSpectrum);
         initialSpectrumShader.SetTexture(KERNEL_CONJUGATE_SPECTRUM, H0K_PROP, buffer);
         initialSpectrumShader.Dispatch(KERNEL_CONJUGATE_SPECTRUM, size / LOCAL_WORK_GROUPS_X, size / LOCAL_WORK_GROUPS_Y, 1);
     }
@@ -92,8 +99,8 @@ public class WavesCascade
         timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dy_Dxz_PROP, DyDxz);
         timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dyx_Dyz_PROP, DyxDyz);
         timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, Dxx_Dzz_PROP, DxxDzz);
-        timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, H0_PROP, InitialSpectrum);
-        timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, PRECOMPUTED_DATA_PROP, PrecomputedData);
+        timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, H0_PROP, initialSpectrum);
+        timeDependentSpectrumShader.SetTexture(KERNEL_TIME_DEPENDENT_SPECTRUMS, PRECOMPUTED_DATA_PROP, precomputedData);
         timeDependentSpectrumShader.SetFloat(TIME_PROP, time);
         timeDependentSpectrumShader.Dispatch(KERNEL_TIME_DEPENDENT_SPECTRUMS, size / LOCAL_WORK_GROUPS_X, size / LOCAL_WORK_GROUPS_Y, 1);
 
@@ -110,14 +117,14 @@ public class WavesCascade
         texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dy_Dxz_PROP, DyDxz);
         texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dyx_Dyz_PROP, DyxDyz);
         texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, Dxx_Dzz_PROP, DxxDzz);
-        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DISPLACEMENT_PROP, Displacement);
-        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DERIVATIVES_PROP, Derivatives);
-        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, TURBULENCE_PROP, Turbulence);
+        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DISPLACEMENT_PROP, displacement);
+        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, DERIVATIVES_PROP, derivatives);
+        texturesMergerShader.SetTexture(KERNEL_RESULT_TEXTURES, TURBULENCE_PROP, turbulence);
         texturesMergerShader.SetFloat(LAMBDA_PROP, lambda);
         texturesMergerShader.Dispatch(KERNEL_RESULT_TEXTURES, size / LOCAL_WORK_GROUPS_X, size / LOCAL_WORK_GROUPS_Y, 1);
 
-        Derivatives.GenerateMips();
-        Turbulence.GenerateMips();
+        derivatives.GenerateMips();
+        turbulence.GenerateMips();
     }
 
     const int LOCAL_WORK_GROUPS_X = 8;

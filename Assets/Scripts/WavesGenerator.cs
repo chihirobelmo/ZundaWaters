@@ -142,7 +142,7 @@ public class WavesGenerator : MonoBehaviour
         return new Vector3(c.r, c.g, c.b);
     }
 
-    void OnCompleteReadback(AsyncGPUReadbackRequest request) { OnCompleteReadback(request, physicsReadback); }
+    void OnCompleteReadback(AsyncGPUReadbackRequest request) => OnCompleteReadback(request, physicsReadback);
 
     void OnCompleteReadback(AsyncGPUReadbackRequest request, Texture2D result)
     {

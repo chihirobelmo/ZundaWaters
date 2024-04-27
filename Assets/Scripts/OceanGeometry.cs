@@ -353,9 +353,9 @@ public class OceanGeometry : MonoBehaviour
                 int x = j;
                 int z = i;
 
-                if ((i == 0 && seams - Seams.Bottom >= 0) || (i == height && seams - Seams.Top >= 0))
+                if ((i == 0 && seams.HasFlag(Seams.Bottom)) || (i == height && seams.HasFlag(Seams.Top)))
                     x = x / 2 * 2;
-                if ((j == 0 && seams - Seams.Left >= 0) || (j == width && seams - Seams.Right >= 0))
+                if ((j == 0 && seams.HasFlag(Seams.Left)) || (j == width && seams.HasFlag(Seams.Right)))
                     z = z / 2 * 2;
 
                 vertices[j + i * (width + 1)] = new Vector3(x, 0, z) * lengthScale;

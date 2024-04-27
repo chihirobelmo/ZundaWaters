@@ -12,8 +12,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
     [SerializeField] const float kThrustChangeRate = 0.1f;
     [SerializeField] const float kSurfaceChangeRate = 30.0f;
     [SerializeField] const float kBallastChangeRate = 3.0f;
-    [SerializeField] const float kMaxBallast = +19.6f;
-    [SerializeField] const float kMinBallast = -9.8f;
+    [SerializeField] const float kMaxBallast = +10.8f;
+    [SerializeField] const float kMinBallast = +8.8f;
     const float kLengthMeter = 110.0f;
     const float kRadiusMeter = 5.0f;
     const float kWaterlineMeter = +1.0f;
@@ -139,7 +139,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
         // Divide ship to each cell
         IEnumerable<Vector3> eachCellOfShip =
-            from z in new int[] { -55, 55 }
+            from z in new int[] { -55, -27, 27, 55 }
             select Pos + Forward * z;
 
         int cellCount = eachCellOfShip.Count();
@@ -148,16 +148,18 @@ public class LosAngelsClassFlightII : MonoBehaviour
         eachCellOfShip.ToList().ForEach(p =>
         {
             // calculate N from gravity and float at each cell.
+            // remember: v = omega * radius
             float omega = FwdRotationSpeedDeg;
-            float radius = (/*offset*/p.z - /*gravity center*/Pos.z);
+            float radius = /*avoid 0 divide*/0.001f + (/*offset*/p.z - /*gravity center*/Pos.z);
 
             Vector3 dv = p.y > 0 ?
             VtDt(waterDrag, kMass, -Vector3.up * gravity, angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount) : // in air
             VtDt(waterDrag, kMass, -Vector3.up * (gravity - ballastAirMPS2), angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount); // under water
+            dv.x = 0; dv.z = 0; // TBD: not sure why but only calculating y axis were not working well...so we remove this from Vector3.
 
             // apply N to velocity;
             velocityMPS += dv;
-            FwdRotationSpeedDeg -= Mathf.Rad2Deg * dv.y * radius * dt * (1.0f / cellCount);
+            FwdRotationSpeedDeg -= Mathf.Rad2Deg * dv.y * radius;
         });
         return this;
     }

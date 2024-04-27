@@ -18,6 +18,16 @@ public static class StaticMath
     /// <param name="a"></param>
     /// <param name="v"></param>
     /// <returns></returns>
+    public static float VtDt(float k, float m, float a, float v) => (-k / m) * (v - m * a / k);
+
+    /// <summary>
+    /// Calculate velocity increase per time.
+    /// </summary>
+    /// <param name="k"></param>
+    /// <param name="m"></param>
+    /// <param name="a"></param>
+    /// <param name="v"></param>
+    /// <returns></returns>
     public static Vector3 VtDt(float k, float m, Vector3 a, Vector3 v) => (-k / m) * (v - m * a / k);
 
     /// <summary>

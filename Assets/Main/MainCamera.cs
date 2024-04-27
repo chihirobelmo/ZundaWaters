@@ -28,8 +28,8 @@ public class MainCamera : MonoBehaviour {
 
         if (Input.GetKey(KeyCode.Mouse1))
         {
-            CameraPosFromPlayer.y += Input.GetAxis("Mouse Y") * Time.deltaTime * (1f / 0.016f);
-            CameraPosFromPlayer.x += Input.GetAxis("Mouse X") * Time.deltaTime * (1f / 0.016f);
+            CameraPosFromPlayer.y += Input.GetAxis("Mouse Y") * Time.deltaTime * 400.0f;
+            CameraPosFromPlayer.x += Input.GetAxis("Mouse X") * Time.deltaTime * 400.0f;
             CameraPosFromPlayer.y = (CameraPosFromPlayer.y > 60) ? 60 : (CameraPosFromPlayer.y < -60) ? -60 : CameraPosFromPlayer.y;
             CameraPosFromPlayer.x = CameraPosFromPlayer.x > 360 ? 360 - CameraPosFromPlayer.x : CameraPosFromPlayer.x < 0 ? CameraPosFromPlayer.x + 360 : CameraPosFromPlayer.x;
         }

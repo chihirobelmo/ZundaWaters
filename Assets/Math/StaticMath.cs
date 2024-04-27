@@ -7,7 +7,7 @@ public static class StaticMath
     public const float KTS_TO_MPS = 1.94384f;
     public const float gravity = 9.8f;
     public const float waterDrag = 5000000f; // placeholder
-    public const float airDrag = 625f; // placeholder
+    public const float airDrag = 1000000f; // placeholder
     public const float circleAreaRatioToSquare = (1.0f * 1.0f) / (0.5f * 0.5f * Mathf.PI);
 
     /// <summary>

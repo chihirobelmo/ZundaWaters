@@ -139,7 +139,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
         // Divide ship to each cell
         IEnumerable<Vector3> eachCellOfShip =
-            from z in Enumerable.Range(-55, 55)
+            from z in new int[] { -55, 55 }
             select Pos + Forward * z;
 
         int cellCount = eachCellOfShip.Count();
@@ -147,19 +147,17 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // Calculate gravity and float makes velocity and rotation for each cell.
         eachCellOfShip.ToList().ForEach(p =>
         {
-            // GC = Gravity Center
-            float offsetFromGC = (p.z - Pos.z);
-
             // calculate N from gravity and float at each cell.
-            Vector3 n = p.y > 0 ?
-            -Vector3.up * gravity * (1.0f / cellCount) : // in air
-            -Vector3.up * (gravity - ballastAirMPS2) * (1.0f / cellCount); // under water
+            float omega = FwdRotationSpeedDeg;
+            float radius = (/*offset*/p.z - /*gravity center*/Pos.z);
+
+            Vector3 dv = p.y > 0 ?
+            VtDt(waterDrag, kMass, -Vector3.up * gravity, angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount) : // in air
+            VtDt(waterDrag, kMass, -Vector3.up * (gravity - ballastAirMPS2), angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount); // under water
 
             // apply N to velocity;
-            velocityMPS += VtDt(p.y > 0 ? airDrag : waterDrag, kMass, n, velocityMPS) * dt / kMass;
-
-            // THIS HAS TO BE FIXED:
-            FwdRotationSpeedDeg += Mathf.Rad2Deg * (n.y / offsetFromGC) * dt * (1.0f / cellCount);
+            velocityMPS += dv;
+            FwdRotationSpeedDeg -= Mathf.Rad2Deg * dv.y * radius * dt * (1.0f / cellCount);
         });
         return this;
     }

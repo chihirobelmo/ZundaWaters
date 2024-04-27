@@ -464,9 +464,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4518908406496110}
+  - component: {fileID: 1294702487593147580}
   - component: {fileID: 136525012783948108}
   - component: {fileID: 65755444854685802}
-  - component: {fileID: 114696005878584320}
   - component: {fileID: 215554259076441332}
   m_Layer: 0
   m_Name: PreFab
@@ -491,6 +491,24 @@ Transform:
   - {fileID: 4202724740736730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1294702487593147580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346778154232876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  angleAileronDeg: 0
+  angleRudderDeg: 0
+  ballastAirMPS2: 9.8
+  thrustN: 7
+  velocityMPS: {x: 0, y: 0, z: 0}
+  angularSpeedDeg: {x: 0, y: 0, z: 0}
 --- !u!136 &136525012783948108
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -513,7 +531,7 @@ CapsuleCollider:
   m_Radius: 5
   m_Height: 110
   m_Direction: 2
-  m_Center: {x: 0, y: -1.16, z: -5.7}
+  m_Center: {x: 0, y: -2.59, z: -5.7}
 --- !u!65 &65755444854685802
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -534,24 +552,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1.24, y: 6.42, z: 7.77}
-  m_Center: {x: 0, y: 6.43, z: 15.24}
---- !u!114 &114696005878584320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346778154232876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ballastAir: 9.8
-  thrust: 1
-  velocityMPS: {x: 0, y: 0, z: 0}
-  gravityVelocityMPS: {x: 0, y: 0, z: 0}
-  angularSpeedDeg: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 4.88, z: 15.24}
 --- !u!215 &215554259076441332
 ReflectionProbe:
   m_ObjectHideFlags: 0
@@ -823,7 +824,7 @@ Transform:
   m_GameObject: {fileID: 1684386398711034}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.8, z: 0}
+  m_LocalPosition: {x: 0, y: -3.33, z: 0}
   m_LocalScale: {x: 3.28084, y: 3.28084, z: 3.28084}
   m_ConstrainProportionsScale: 0
   m_Children:

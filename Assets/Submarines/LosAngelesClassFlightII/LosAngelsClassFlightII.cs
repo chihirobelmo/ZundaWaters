@@ -3,66 +3,144 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static StaticMath;
 
 public class LosAngelsClassFlightII : MonoBehaviour
 {
+    // Ship Parameters
+    [SerializeField] const float kMass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
+    [SerializeField] const float kThrustChangeRate = 0.1f;
+    [SerializeField] const float kSurfaceChangeRate = 30.0f;
+    [SerializeField] const float kBallastChangeRate = 3.0f;
+    [SerializeField] const float kMaxBallast = +19.6f;
+    [SerializeField] const float kMinBallast = -9.8f;
+    const float kLengthMeter = 110.0f;
+    const float kRadiusMeter = 5.0f;
+    const float kWaterlineMeter = +1.0f;
+
+    enum Bell
+    {
+        FullAhead,
+        HalfAhead,
+        SlowAhead,
+        DeadSlowAhead,
+        Stop,
+        DeadSlowAstern,
+        SlowAstern,
+        HalfAstern,
+        FullAstern
+    }
+
+    public bool IsPropellerUnderWater => Object3DPropellerAxis.position.y <= 0;
+
+    /// <summary>
+    /// Ship Forward Vector in world space.
+    /// </summary>
+    public Vector3 Forward => transform.forward;
+
+    /// <summary>
+    /// Ship Right Vector in world space.
+    /// </summary>
+    public Vector3 Right => transform.right;
+
+    /// <summary>
+    /// Ship Up Vector in world space.
+    /// </summary>
+    public Vector3 Up => transform.up;
+
+    /// <summary>
+    /// Ship Position in world space.
+    /// </summary>
+    public Vector3 Pos { get => transform.position; set => transform.position = value; }
+
+    /// <summary>
+    /// Ship Rotation in quaternion.
+    /// </summary>
+    public Quaternion Rot { get => transform.rotation; set => transform.rotation = value; }
+
+    /// <summary>
+    /// Rotation Speed in degree per second the ship rotates to fwd/aft (x-axis).
+    /// </summary>
+    public float FwdRotationSpeedDeg { get => angularSpeedDeg.x; set => angularSpeedDeg.x = value; }
+
+    /// <summary>
+    /// Angle aileron in degree per second.
+    /// </summary>
+    [SerializeField] float angleAileronDeg = 0.0f;
+
+    /// <summary>
+    /// Angle rudder in degree per second.
+    /// </summary>
+    [SerializeField] float angleRudderDeg = 0.0f;
+
+    /// <summary>
+    /// anti gravity acceleration in m/s^2 only works under the water.
+    /// </summary>
+    [SerializeField] float ballastAirMPS2 = 9.8f;
+
+    /// <summary>
+    /// thrust made by propeller in N.
+    /// </summary>
+    [SerializeField] float thrustN = 7.0f;
+
+    /// <summary>
+    /// velocityspeed) in m/s per xyz axis
+    /// </summary>
+    [SerializeField] Vector3 velocityMPS;
+
+    /// <summary>
+    /// degree per second ship rotates around gc to xyz axis.
+    /// </summary>
+    [SerializeField] Vector3 angularSpeedDeg;
+
+    private Vector3 lastPosition_;
+
+    public Vector3 LastPosition { get => lastPosition_; set => lastPosition_ = Pos; }
+
+    /// <summary>
+    /// Ship Movement Vector
+    /// </summary>
+    public Vector3 Vector => Pos - LastPosition;
+    public float Knots => Vector.magnitude * KTS_TO_MPS;
+
     // Use this for initialization
     void Start()
     {
-        velocityMPS = transform.forward * 5.0f * KTS_TO_MPS;
-        lastPosition = transform.position;
+        velocityMPS = Forward * 5.0f/*knots*/ * KTS_TO_MPS;
+        LastPosition = Pos;
     }
 
-    public static float VtPerDt(float k, float m, float a, float v) =>  (-k / m) * (v - m * a / k);
-
-    public static Vector3 VtPerDt(float k, float m, Vector3 a, Vector3 v) =>  (-k / m) * (v - m * a / k);
-
-    const float KTS_TO_MPS = 1.94384f;
-    const float gravity = 9.8f;
-    const float mass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
-    const float waterDrag = 5000000f;
-    const float airDrag = 1f;
-
-    [SerializeField] float angleAileron = 0.0f;
-    [SerializeField] float angleRudder = 0.0f;
-
-    [SerializeField] float ballastAir = 9.8f;
-    [SerializeField] float thrust = 1.0f;
-    [SerializeField] Vector3 velocityMPS;
-    [SerializeField] Vector3 angularSpeedDeg;
-
-    [SerializeField] float Knots { 
-        get => (lastPosition - transform.position).magnitude;
-        set => velocityMPS = transform.forward * value; }
-    Vector3 lastPosition;
-
-    void updateInfo()
+    LosAngelsClassFlightII updateLastPosition()
     {
-        lastPosition = transform.position;
+        LastPosition = Pos;
+        return this;
     }
 
-    void UpdateVelocity()
+    LosAngelsClassFlightII UpdateVelocity()
     {
         // propeller under the  water
-        if ((transform.position + transform.forward * -50.0f).y <= 0)
+        if (IsPropellerUnderWater)
         {
-            velocityMPS += VtPerDt(waterDrag, mass, transform.forward * thrust, velocityMPS) * Time.deltaTime;
+            velocityMPS += VtDt(waterDrag, kMass, Forward * thrustN, velocityMPS) * dt;
         }
         // cancel inartial velocity
-        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, transform.right) * Time.deltaTime;
-        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, transform.up) * Time.deltaTime;
+        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, Right) * dt;
+        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, Up) * dt;
+        // TBD: calc drag to cancel inartial velocity, use ElipsoidProjectedAreaM2.
+        return this;
     }
 
-    void UpdatePosition() 
-        => transform.position += velocityMPS * Time.deltaTime;
+    LosAngelsClassFlightII UpdatePosition() {
+        Pos += velocityMPS * dt;
+        return this;
+    }
+    LosAngelsClassFlightII CalcAndApplyGravityAndFloat() {
 
-    void CalcGravityAndFloat() {
 
-       // Divide ship to each cell
-       IEnumerable < Vector3 > eachCellOfShip =
-           from z in Enumerable.Range(-55,55)
-           select transform.position + 
-           transform.forward * z;
+        // Divide ship to each cell
+        IEnumerable<Vector3> eachCellOfShip =
+            from z in Enumerable.Range(-55, 55)
+            select Pos + Forward * z;
 
         int cellCount = eachCellOfShip.Count();
 
@@ -70,87 +148,121 @@ public class LosAngelsClassFlightII : MonoBehaviour
         eachCellOfShip.ToList().ForEach(p =>
         {
             // GC = Gravity Center
-            float offsetFromGC = (p.z - transform.position.z);
+            float offsetFromGC = (p.z - Pos.z);
 
-            // 
-            Vector3 n = p.y > 0 ? 
-            VtPerDt(airDrag, mass, -Vector3.up * gravity, velocityMPS) * (1.0f / cellCount) : // in air
-            VtPerDt(waterDrag, mass, -Vector3.up * (gravity - ballastAir), velocityMPS) * (1.0f / cellCount); // under water
+            // calculate N from gravity and float at each cell.
+            Vector3 n = p.y > 0 ?
+            -Vector3.up * gravity * (1.0f / cellCount) : // in air
+            -Vector3.up * (gravity - ballastAirMPS2) * (1.0f / cellCount); // under water
 
-            velocityMPS += n * Time.deltaTime;
-            angularSpeedDeg.x += Mathf.Rad2Deg * (2.0f * Mathf.PI / 60.0f) * n.y * offsetFromGC * Time.deltaTime;
+            // apply N to velocity;
+            velocityMPS += VtDt(p.y > 0 ? airDrag : waterDrag, kMass, n, velocityMPS) * dt / kMass;
+
+            // THIS HAS TO BE FIXED:
+            FwdRotationSpeedDeg += Mathf.Rad2Deg * (n.y / offsetFromGC) * dt * (1.0f / cellCount);
         });
+        return this;
     }
 
-    void UpdateOrientaion()
+    LosAngelsClassFlightII UpdateOrientaion()
     {
-        // yaw and pitch
-        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y + (angleRudder - angularSpeedDeg.y) * Time.deltaTime, -360.0f, 360.0f);
-        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x + (angleAileron - angularSpeedDeg.x) * Time.deltaTime, -360.0f, 360.0f);
-        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y, -360.0f, 360.0f);
-        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x, -60.0f, 60.0f);
+        const float maxYawDegPerSecond = 360.0f;
 
-        transform.rotation *= Quaternion.Euler((angularSpeedDeg * Mathf.Deg2Rad) * Time.deltaTime);
+        // yaw and pitch
+        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y.Deg() + (angleRudderDeg - angularSpeedDeg.y).Degt() * dt, -maxYawDegPerSecond, maxYawDegPerSecond);
+        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x.Deg() + (angleAileronDeg - angularSpeedDeg.x).Degt() * dt, -maxYawDegPerSecond, maxYawDegPerSecond);
+        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y.Deg(), -360.0f, 360.0f);
+        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x.Deg(), -30.0f, 30.0f);
+
+        Rot *= Quaternion.Euler((angularSpeedDeg * Mathf.Deg2Rad).Radt() * dt);
 
         // roll fixed 0
-        transform.rotation *= Quaternion.Euler((new Vector3(0, 0, -transform.eulerAngles.z) * Mathf.Deg2Rad) * Time.deltaTime);
+        Rot *= Quaternion.Euler(new Vector3(0, 0, -transform.eulerAngles.z).Degt() * Mathf.Deg2Rad * dt);
+
+        return this;
     }
 
-    void ChangeAndLimitThrust(float add) 
-        => thrust = Mathf.Clamp(thrust + add, -10.0f, 40.0f);
+    void ChangeAndLimitThrust(float dN)
+        => thrustN = Mathf.Clamp(thrustN + dN, -10.0f, 40.0f);
 
-    void ChangeAndLimitYawAngularSpeed(float add) 
-        => angleRudder = Mathf.Clamp(angleRudder + add, -30.0f, 30.0f);
+    void ChangeAndLimitYawAngularSpeed(float dDeg)
+        => angleRudderDeg = Mathf.Clamp(angleRudderDeg + dDeg, /*min*/-80.0f/*deg*/, /*max*/80.0f/*deg*/);
 
-    void ChangeAndLimitPitchAngularSpeed(float add) 
-        => angleAileron = Mathf.Clamp(angleAileron + add, -30.0f, 30.0f);
+    void ChangeAndLimitPitchAngularSpeed(float dDeg)
+        => angleAileronDeg = Mathf.Clamp(angleAileronDeg + dDeg, /*min*/-40.0f/*deg*/, /*max*/40.0f/*deg*/);
 
-    void StabilizeRoll() => transform.rotation = Quaternion.Euler(transform.eulerAngles.x, transform.eulerAngles.y, 0.0f);
+    /// <summary>
+    /// force roll to 0.
+    /// </summary>
+    LosAngelsClassFlightII StabilizeRoll() {
+        Rot = Quaternion.Euler(transform.eulerAngles.x.Deg(), transform.eulerAngles.y.Deg(), 0.0f.Deg());
+        return this;
+    }
 
-    // Update is called once per frame
-    void Update()
+    Transform Object3DPropellerBlades => transform.GetChild(0).GetChild(0);
+    Transform Object3DPropellerAxis => transform.GetChild(0).GetChild(8);
+
+    LosAngelsClassFlightII Animation()
     {
-        updateInfo();
+        const float propellerRadiusMeter = 2.5f;
+        const float leftRotation = -1.0f;
+        const float propellerRotationRatio = /*make it 1 rad at certain thrust*/(1.0f / /*thrust value where rotation becomes 1.0 rad*/10.0f);
+        new List<Transform> { Object3DPropellerBlades, Object3DPropellerAxis }
+        .ForEach(x => x.Rotate(Forward, leftRotation * (thrustN / propellerRadiusMeter) * propellerRotationRatio, Space.World));
 
-        // rotate propeller
-        transform.GetChild(0).GetChild(0).Rotate(transform.forward, -thrust, Space.World);
-        transform.GetChild(0).GetChild(8).Rotate(transform.forward, -thrust, Space.World);
+        return this;
+    }
 
-        UpdateVelocity();
-        CalcGravityAndFloat();
-        UpdatePosition();
-        UpdateOrientaion();
-        StabilizeRoll();
+    LosAngelsClassFlightII UserControl()
+    {
+        const float thrustUp = +1.0f;
+        const float thrustDown = -1.0f;
+        const float pitchUp = -1.0f;
+        const float pitchDown = +1.0f;
+        const float leftYaw = -1.0f;
+        const float rightYaw = +1.0f;
 
         new Dictionary<KeyCode, System.Action> {
-            // Thrust Uo
-            { KeyCode.Q, () => { ChangeAndLimitThrust(+1.0f * Time.deltaTime); } },
-            // Thrust Down
-            { KeyCode.Z, () => { ChangeAndLimitThrust(-1.0f * Time.deltaTime); } },
-            // Yaw Left
-            { KeyCode.A, () => { ChangeAndLimitYawAngularSpeed(-30.0f * Time.deltaTime); } },
-            // Yaw Right
-            { KeyCode.D, () => { ChangeAndLimitYawAngularSpeed(+30.0f * Time.deltaTime); } },
-            // Pitch Down
-            { KeyCode.W, () => { ChangeAndLimitPitchAngularSpeed(+30.0f * Time.deltaTime); } },
-            // Pitch Up
-            { KeyCode.S, () => { ChangeAndLimitPitchAngularSpeed(-30.0f * Time.deltaTime); } },
-            // Ballast more air
-            { KeyCode.E, () => { ballastAir = Mathf.Clamp(ballastAir + 0.1f * Time.deltaTime, 9.6f, 10.0f); } },
-            // Ballast more water
-            { KeyCode.C, () => { ballastAir = Mathf.Clamp(ballastAir - 0.1f * Time.deltaTime, 9.6f, 10.0f); } },
-            // Reset Yaw/Pitch/Ballast
-            { KeyCode.X, () => { 
-                angleRudder -= angleRudder * Time.deltaTime;
-                angleAileron -= angleAileron * Time.deltaTime;
-                ballastAir -= (ballastAir - 9.8f) * Time.deltaTime;
+            // Q: Thrust Uo
+            { KeyCode.Q, () => ChangeAndLimitThrust(thrustUp * kThrustChangeRate * dt) },
+            // Z: Thrust Down
+            { KeyCode.Z, () => ChangeAndLimitThrust(thrustDown * kThrustChangeRate * dt) },
+            // A: Yaw Left
+            { KeyCode.A, () => ChangeAndLimitYawAngularSpeed(leftYaw * kSurfaceChangeRate * dt) },
+            // D: Yaw Right
+            { KeyCode.D, () => ChangeAndLimitYawAngularSpeed(rightYaw * kSurfaceChangeRate * dt) },
+            // W: Pitch Down
+            { KeyCode.W, () => ChangeAndLimitPitchAngularSpeed(pitchDown * kSurfaceChangeRate * dt) },
+            // S: Pitch Up
+            { KeyCode.S, () => ChangeAndLimitPitchAngularSpeed(pitchUp * kSurfaceChangeRate * dt) },
+            // E: Ballast more air
+            { KeyCode.E, () => { ballastAirMPS2 = Mathf.Clamp(ballastAirMPS2 + kBallastChangeRate * dt, kMinBallast, kMaxBallast); } },
+            // C: Ballast more water
+            { KeyCode.C, () => { ballastAirMPS2 = Mathf.Clamp(ballastAirMPS2 - kBallastChangeRate * dt, kMinBallast, kMaxBallast); } },
+            // X: Reset Yaw/Pitch/Ballast
+            { KeyCode.X, () => {
+                angleRudderDeg -= angleRudderDeg * dt;
+                angleAileronDeg -= angleAileronDeg * dt;
+                ballastAirMPS2 -= (ballastAirMPS2 - gravity) * dt;
             } },
         }
         .ToList()
         .Select(x => { if (Input.GetKey(x.Key)) x.Value(); return 0; })
         .Sum();
 
+        return this;
     }
+
+    // Update is called once per frame
+    void Update() =>
+        UserControl()
+        .UpdateVelocity()
+        .CalcAndApplyGravityAndFloat()
+        .UpdatePosition()
+        .UpdateOrientaion()
+        .StabilizeRoll()
+        .Animation()
+        .updateLastPosition();
 
     private void OnCollisionEnter(Collision collision)
     {

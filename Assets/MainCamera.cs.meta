@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: c8fd98e937c8c20478bed6e201ff9c68
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - theSkyBox: {fileID: 2100000, guid: f07bf21780b796444862d6aa846d2892, type: 2}
+  - theWaterBox: {fileID: 2100000, guid: 47d2c53f93fb3194fb2d10089230e674, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

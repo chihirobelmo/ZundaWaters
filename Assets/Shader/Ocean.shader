@@ -35,6 +35,7 @@
     }
         SubShader
     {
+        Cull Off // for underwater camera
         Tags {"Queue" = "Transparent" "RenderType" = "Opaque" }
         LOD 200
 

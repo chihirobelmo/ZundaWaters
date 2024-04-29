@@ -17,7 +17,7 @@ public class Main : MonoBehaviour {
     static public GameObject clientMfdPanel2;
     static public Camera clientMainCamera;
 
-    static public bool floatOriginResetFlag = false;
+    static public Vector3 playerPosition;
 
     // Use this for initialization
     void Start ()
@@ -33,6 +33,8 @@ public class Main : MonoBehaviour {
     {
         ResetFloatingPointOrigin();
     }
+
+    static public Vector3 offsetForReset;
 
     /// <summary>
     /// Reset the floating point origin
@@ -51,18 +53,11 @@ public class Main : MonoBehaviour {
          When the player has moved a specific distance (like 1km) they move everything back 1km.
          This way the player is now at the world origin again. They do this for everything.
          */
-        if (floatOriginResetFlag)
-        {
-            // revert everything to orign
-            new List<GameObject> { clientPlayer }.ForEach(x => {
-                x.transform.position -= new Vector3(clientPlayer.transform.position.x, 0, clientPlayer.transform.position.z);
-            });
 
-            OceanGeometry.floatOriginResetFlag = true;
-            OceanGeometry.resetOffset = new Vector3(clientPlayer.transform.position.x, 0, clientPlayer.transform.position.z);
-
-            clientPlayer.transform.position = new Vector3(0, clientPlayer.transform.position.y, 0);
-            floatOriginResetFlag = false;
-        }
+        // revert everything to orign
+        new List<GameObject> { clientPlayer }.ForEach(x => {
+            x.transform.position += offsetForReset;
+        });
+        offsetForReset = new Vector3(0, 0, 0);
     }
 }

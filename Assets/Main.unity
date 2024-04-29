@@ -158,7 +158,7 @@ MonoBehaviour:
   oceanMaterial: {fileID: 2100000, guid: 79f16f7e2e961cc46828737b584510ee, type: 2}
   updateMaterialProperties: 0
   showMaterialLods: 0
-  lengthScale: 15
+  lengthScale: 256
   vertexDensity: 30
   clipLevels: 8
   skirtSize: 55.4
@@ -177,9 +177,9 @@ MonoBehaviour:
   size: 256
   wavesSettings: {fileID: 11400000, guid: a15d9b9d6a919584db82c8af30e854c9, type: 2}
   alwaysRecalculateInitials: 0
-  lengthScale0: 250
-  lengthScale1: 17
-  lengthScale2: 5
+  lengthScale0: 256
+  lengthScale1: 64
+  lengthScale2: 16
   fftShader: {fileID: 7200000, guid: 38e7049002205c24c8328830bc846265, type: 3}
   initialSpectrumShader: {fileID: 7200000, guid: 5cb4d3604a2a309418e28b4c84483b75,
     type: 3}

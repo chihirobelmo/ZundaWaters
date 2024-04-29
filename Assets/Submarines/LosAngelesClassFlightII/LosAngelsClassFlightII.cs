@@ -273,10 +273,15 @@ public class LosAngelsClassFlightII : MonoBehaviour
         lastPosition = transform.position;
 
         // floating point origin reset
-        if (transform.position.magnitude >= 100.0f)
+        if (Mathf.Abs(transform.position.x) >= 256)
         {
-            lastPosition = new Vector3(0,transform.position.y,0);
-            Main.floatOriginResetFlag = true;
+            lastPosition = new Vector3(-transform.position.x, transform.position.y, transform.position.z);
+            Main.offsetForReset = lastPosition - transform.position;
+        }
+        if (Mathf.Abs(transform.position.z) >= 256)
+        {
+            lastPosition = new Vector3(transform.position.x, transform.position.y, -transform.position.z);
+            Main.offsetForReset = lastPosition - transform.position;
         }
     }
 

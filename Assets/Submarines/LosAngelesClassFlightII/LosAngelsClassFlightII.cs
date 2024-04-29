@@ -169,15 +169,10 @@ public class LosAngelsClassFlightII : MonoBehaviour
         const float maxYawDegPerSecond = 360.0f;
 
         // yaw and pitch
-        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y.Deg() + (angleRudderDeg - angularSpeedDeg.y).Degt() * dt, -maxYawDegPerSecond, maxYawDegPerSecond);
-        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x.Deg() + (angleAileronDeg - angularSpeedDeg.x).Degt() * dt, -maxYawDegPerSecond, maxYawDegPerSecond);
-        angularSpeedDeg.y = Mathf.Clamp(angularSpeedDeg.y.Deg(), -360.0f, 360.0f);
-        angularSpeedDeg.x = Mathf.Clamp(angularSpeedDeg.x.Deg(), -30.0f, 30.0f);
+        angularSpeedDeg.y = angleRudderDeg; // Mathf.Clamp(angularSpeedDeg.y.Deg() + (angleRudderDeg - angularSpeedDeg.y).Degt() * dt, -80, 80);
+        angularSpeedDeg.x = angleAileronDeg; // Mathf.Clamp(angularSpeedDeg.x.Deg() + (angleAileronDeg - angularSpeedDeg.x).Degt() * dt, -40, 40);
 
         Rot *= Quaternion.Euler((angularSpeedDeg * Mathf.Deg2Rad).Radt() * dt);
-
-        // roll fixed 0
-        Rot *= Quaternion.Euler(new Vector3(0, 0, -transform.eulerAngles.z).Degt() * Mathf.Deg2Rad * dt);
 
         return this;
     }

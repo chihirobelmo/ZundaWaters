@@ -79,14 +79,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e081a99cc7cdd0549bf70c330a348816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mfdScreen1: {fileID: 5045828250833224315, guid: 25577bfac1840cd499a2adbd1bfd885e,
+  mfdScreen: {fileID: 5045828250833224315, guid: 25577bfac1840cd499a2adbd1bfd885e,
     type: 3}
   renderTexture: {fileID: 8400000, guid: de3cfda508a7acb4d854237a179cae6d, type: 2}
   mfdCamera: {fileID: 894255032897794458, guid: f2cadf5cb595d7b43aa3f60e16f5f2eb,
     type: 3}
   canvas: {fileID: 7571758680311510474, guid: 2a6e6206cf77cfb4fb76db57ac82f52c, type: 3}
-  screenCanvas: {fileID: 7707722536661788256, guid: 0ad7f494c99f31c4f887dfdf3bbcb830,
-    type: 3}
   mfdposoffset: -0.03
   mfdcampos: {x: 1, y: 0, z: 0}
 --- !u!1001 &483054486563797944

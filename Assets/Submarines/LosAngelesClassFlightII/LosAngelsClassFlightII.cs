@@ -14,6 +14,10 @@ public class LosAngelsClassFlightII : MonoBehaviour
     [SerializeField] const float kBallastChangeRate = 3.0f;
     [SerializeField] const float kMaxBallast = +10.8f;
     [SerializeField] const float kMinBallast = +8.8f;
+
+    [SerializeField] double trueX = 0.0;
+    [SerializeField] double trueZ = 0.0;
+
     const float kLengthMeter = 110.0f;
     const float kRadiusMeter = 5.0f;
     const float kWaterlineMeter = +1.0f;
@@ -258,6 +262,23 @@ public class LosAngelsClassFlightII : MonoBehaviour
         .StabilizeRoll()
         .Animation()
         .updateLastPosition();
+
+    private void EndFrameJob()
+    {
+        // Update True XY
+        trueX += transform.position.x - lastPosition.x;
+        trueZ += transform.position.z - lastPosition.z;
+
+        // Update LastPosition
+        lastPosition = transform.position;
+
+        // floating point origin reset
+        if (transform.position.magnitude >= 100.0f)
+        {
+            lastPosition = new Vector3(0,transform.position.y,0);
+            Main.floatOriginResetFlag = true;
+        }
+    }
 
     private void OnCollisionEnter(Collision collision)
     {

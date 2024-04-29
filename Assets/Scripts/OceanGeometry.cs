@@ -86,15 +86,7 @@ public class OceanGeometry : MonoBehaviour
 
         UpdatePositions();
         UpdateMaterials();
-
-        if (floatOriginResetFlag) { 
-            transform.position -= new Vector3(resetOffset.x, 0, resetOffset.z);
-            floatOriginResetFlag = false;
-        }
     }
-
-    public static Vector3 resetOffset;
-    public static bool floatOriginResetFlag = false;
 
     void UpdateMaterials()
     {

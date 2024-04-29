@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1374961873143614044}
   - component: {fileID: -7556284116944369898}
   m_Layer: 3
-  m_Name: MFD1Panel
+  m_Name: MFD2Panel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79,16 +79,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e081a99cc7cdd0549bf70c330a348816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mfdScreen1: {fileID: 5045828250833224315, guid: e9a459e6237e7f14ab7eb6e3ff184124,
+  mfdScreen1: {fileID: 5045828250833224315, guid: 25577bfac1840cd499a2adbd1bfd885e,
     type: 3}
-  renderTexture: {fileID: 8400000, guid: c7956c3ee83f6b14f9d70630fe3d6a6f, type: 2}
-  mfdCamera: {fileID: 894255032897794458, guid: 8f39552b4e68bef4e88311f48a814d42,
+  renderTexture: {fileID: 8400000, guid: de3cfda508a7acb4d854237a179cae6d, type: 2}
+  mfdCamera: {fileID: 894255032897794458, guid: f2cadf5cb595d7b43aa3f60e16f5f2eb,
     type: 3}
-  canvas: {fileID: 7571758680311510474, guid: 4ae59edcc1c2fae49b185b049b6a9f3e, type: 3}
+  canvas: {fileID: 7571758680311510474, guid: 2a6e6206cf77cfb4fb76db57ac82f52c, type: 3}
   screenCanvas: {fileID: 7707722536661788256, guid: 0ad7f494c99f31c4f887dfdf3bbcb830,
     type: 3}
-  mfdposoffset: 0.03
-  mfdcampos: {x: -1, y: 0, z: 0}
+  mfdposoffset: -0.03
+  mfdcampos: {x: 1, y: 0, z: 0}
 --- !u!1001 &483054486563797944
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -110,7 +110,7 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 5979e7c6f8de30644951e8c82a50369f,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5979e7c6f8de30644951e8c82a50369f,
         type: 3}

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7152671224625183215}
   m_Layer: 3
-  m_Name: Screen1
+  m_Name: Screen2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -100,6 +100,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 8c45d1f6aa000b442b248998c06f5d26,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a4a6a3956c031f143a16bb2fb420e57d, type: 2}
     - target: {fileID: 919132149155446097, guid: 8c45d1f6aa000b442b248998c06f5d26,
         type: 3}
       propertyPath: m_Name

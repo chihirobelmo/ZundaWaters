@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 9141543660874525973}
   - component: {fileID: 5055934502342486094}
   m_Layer: 5
-  m_Name: Canvas
+  m_Name: MFDPanelCanvas1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

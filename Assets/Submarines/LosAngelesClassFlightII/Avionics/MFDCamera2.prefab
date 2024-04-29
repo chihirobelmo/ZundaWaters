@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 894255032897794458}
   - component: {fileID: 3498266807724706137}
   m_Layer: 3
-  m_Name: MFDCamera
+  m_Name: MFDCamera2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -74,7 +74,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 8
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 8400000, guid: c60bb298c29f3d540baa6b5da2d1ab8f, type: 2}
+  m_TargetTexture: {fileID: 8400000, guid: a5fe8c2a20a87c04b915006c8e4735b5, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1

@@ -492,10 +492,38 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
         type: 3}
+      propertyPath: mfd
+      value: 
+      objectReference: {fileID: 1676670186125747825, guid: 3b4757a1fa4721a4cb0484e24567d4da,
+        type: 3}
+    - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
+        type: 3}
+      propertyPath: screen1
+      value: 
+      objectReference: {fileID: 8400000, guid: c7956c3ee83f6b14f9d70630fe3d6a6f, type: 2}
+    - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
+        type: 3}
+      propertyPath: mfdpanel
+      value: 
+      objectReference: {fileID: 1726616575501276654, guid: 90767f5e3af8ac844b8dca278c942d8c,
+        type: 3}
+    - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
+        type: 3}
       propertyPath: mainCamera
       value: 
       objectReference: {fileID: 1718605166417689887, guid: e311fb44fe6287a45b2a5fbab5a93575,
         type: 3}
+    - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
+        type: 3}
+      propertyPath: mfdScreen1
+      value: 
+      objectReference: {fileID: 5045828250833224315, guid: e9a459e6237e7f14ab7eb6e3ff184124,
+        type: 3}
+    - target: {fileID: 114421425259599040, guid: a857ea6ee5902f14d922669fd30be823,
+        type: 3}
+      propertyPath: renderTextureScreen1
+      value: 
+      objectReference: {fileID: 8400000, guid: c7956c3ee83f6b14f9d70630fe3d6a6f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

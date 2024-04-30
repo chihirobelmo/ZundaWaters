@@ -105,23 +105,23 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // ship forward in air
         if (ShipForward.y > 0)
         {
-            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity, velocityMPS) * dt / 2.0f;
+            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity / 2.0f, velocityMPS) * dt;
             angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd fall
         }
         else
         {
-            velocityMPS += VtDt(waterDrag, kMass, Vector3.up * -(gravity - ballastAirMPS2), velocityMPS) * dt / 2.0f;
+            velocityMPS += VtDt(waterDrag, kMass, Vector3.up * -(gravity - ballastAirMPS2) / 2.0f, velocityMPS) * dt;
             angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd up
         }
 
         if (ShipAstern.y > 0)
         {
-            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity, velocityMPS) * dt / 2.0f;
+            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity / 2.0f, velocityMPS) * dt;
             angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft fall
         }
         else
         {
-            velocityMPS += VtDt(waterDrag, kMass, transform.forward * thrustN + Vector3.up * -(gravity - ballastAirMPS2), velocityMPS) * dt / 2.0f;
+            velocityMPS += VtDt(waterDrag, kMass, transform.forward * thrustN + Vector3.up * -(gravity - ballastAirMPS2) / 2.0f, velocityMPS) * dt;
             angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft up
         }
 
@@ -178,17 +178,17 @@ public class LosAngelsClassFlightII : MonoBehaviour
     static public float TargetThrustN(Bell bell)
     {
         if (new Dictionary<Bell, float> {
-            { Bell.FlankAhead, 40.0f },
-            { Bell.FullAhead, 30.0f },
-            { Bell.HalfAhead, 20.0f },
-            { Bell.SlowAhead, 10.0f },
-            { Bell.DeadSlowAhead, 5.0f },
+            { Bell.FlankAhead, 10.0f },
+            { Bell.FullAhead, 8.0f },
+            { Bell.HalfAhead, 6.0f },
+            { Bell.SlowAhead, 4.0f },
+            { Bell.DeadSlowAhead, 2.0f },
             { Bell.Stop, 0.0f },
-            { Bell.DeadSlowAstern, -5.0f },
-            { Bell.SlowAstern, -10.0f },
-            { Bell.HalfAstern, -20.0f },
-            { Bell.FullAstern, -30.0f },
-            { Bell.FlankAstern, -40.0f }
+            { Bell.DeadSlowAstern, -2.0f },
+            { Bell.SlowAstern, -4.0f },
+            { Bell.HalfAstern, -6.0f },
+            { Bell.FullAstern, -8.0f },
+            { Bell.FlankAstern, -10.0f }
         }.TryGetValue(bell, out float targetThrustN)) {
             return targetThrustN;
         }

@@ -99,45 +99,65 @@ public class LosAngelsClassFlightII : MonoBehaviour
         lastPosition = transform.position;
     }
 
-    LosAngelsClassFlightII UpdateVelocity()
+    LosAngelsClassFlightII UpdateVelocityAndBuyonancy()
     {
+        // ship forward and astern position in world space meter.
         Vector3 shipForward = transform.position + transform.forward * kLengthMeter;
         Vector3 shipAstern = transform.position - transform.forward * kLengthMeter;
-        Vector3 propeller = transform.position - transform.forward * kLengthMeter;
 
+        // divide ships in each cell to calculate gravity and buyonancy.
         var dividedPos =
         from z in Enumerable.Range((int)(-kLengthMeter / 2), (int)(kLengthMeter / 2))
         from y in Enumerable.Range(-5, 5)
         select transform.position + transform.forward * z + transform.up * y;
 
+        // ballast affects power change by how percentage ship under water.
         var affectingBallast = dividedPos.Select(pos => pos.y <= 0 ? ballastAirMPS2 : 0).Average();
 
+        // gravity vs buyonancy result
         Vector3 g = Vector3.up * -(gravity - affectingBallast);
+
+        // thrust available if only propeller under water
         Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN : new Vector3();
 
+        // Velocity update
         if (transform.position.y > 0) // ship in the air
         {
             velocityMPS += VtDt(airDrag, kMass, thrust, velocityMPS) * dt;
-            velocityMPS.y += g.y * dt;
         }
-        else
+        else // under water
         {
             velocityMPS += VtDt(waterDrag, kMass, thrust, velocityMPS) * dt;
-            velocityMPS.y += g.y * dt;
         }
+        velocityMPS.y += g.y * dt;
 
-        // foward fall
-        if (shipForward.y > 0) {
-            angularSpeedInAirDeg.x += OmegaRad(gravity, kLengthMeter) * Mathf.Rad2Deg * dt;
+        //// rotate with gravity ////
+        
+        // TBD: still not sure about the best solution.
+        Vector3 shipVector = shipForward - shipAstern;
+
+        // the point ship is on the surface.
+        Vector3 surfacePoint = shipVector - shipVector.y * Vector3.up;
+
+        if (shipForward.y > 0 && shipAstern.y <= 0) {
+            // forward fall with gravity
+            angularSpeedInAirDeg.x += OmegaRad(gravity, (shipForward - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
+            // astern float with buyonancy
+            angularSpeedInAirDeg.x += OmegaRad(gravity - affectingBallast, (shipAstern - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
         }
         // astern fall
-        if (shipAstern.y > 0)
+        else if (shipForward.y <= 0 && shipAstern.y > 0)
         {
-            angularSpeedInAirDeg.x -= OmegaRad(gravity, kLengthMeter) * Mathf.Rad2Deg * dt;
+            // astern fall with gravity
+            angularSpeedInAirDeg.x -= OmegaRad(gravity, (shipAstern - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
+            // forward float with buyonancy
+            angularSpeedInAirDeg.x -= OmegaRad(gravity - affectingBallast, (shipForward - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
         }
-        // both under water
-        if (shipForward.y <= 0 && shipAstern.y <= 0) {
-            angularSpeedInAirDeg.x = TargetValueVector(0.0f, angularSpeedInAirDeg.x, 5.0f, 10.0f) * dt;
+        // both under water or in air
+        else
+        {
+            // should we?
+            angularSpeedInAirDeg.x = 0.0f;
         }
 
         return this;
@@ -294,7 +314,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
         angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
-        UpdateVelocity();
+        UpdateVelocityAndBuyonancy();
         UpdatePosition();
         UpdateOrientaion();
         StabilizeRoll();

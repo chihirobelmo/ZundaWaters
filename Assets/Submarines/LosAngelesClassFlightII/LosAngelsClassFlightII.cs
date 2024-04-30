@@ -24,15 +24,13 @@ public class LosAngelsClassFlightII : MonoBehaviour
     public Bell currentBell = Bell.DeadSlowAhead;
     public float targetThrustN = TargetThrustN(Bell.DeadSlowAhead);
     public float targetPitchDeg = 0;
-    public float targetRudderDeg = 0;
+    public float targetAileronDeg = 0;
 
-    PID thrustController = new PID(0.1f, 1.0f, 0);
-    PID pitchController = new PID(0.1f, 5.0f, 0);
-
-    
+    PID aileronController = new PID(5.0f, 1.5f, 0.0f);
 
     public enum Bell : int
     {
+        MinInvalid, // please keep this at first.
         FlankAhead,
         FullAhead,
         HalfAhead,
@@ -43,7 +41,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
         SlowAstern,
         HalfAstern,
         FullAstern,
-        FlankAstern
+        FlankAstern,
+        MaxInvalid // Please keep this at end.
     }
 
     public bool IsPropellerUnderWater => Object3DPropellerAxis.position.y <= 0;
@@ -146,8 +145,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     LosAngelsClassFlightII UpdateOrientaion()
     {
-        const float maxYawDegPerSecond = 360.0f;
-
         // yaw and pitch
         // somehow input yaw also inputs pitch so placeholder for now.
         angularSpeedDeg.y = angleRudderDeg; // Mathf.Clamp(angularSpeedDeg.y.Deg() + (angleRudderDeg - angularSpeedDeg.y).Degt() * dt, -80, 80);
@@ -191,32 +188,41 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     static public float TargetThrustN(Bell bell)
     {
-        switch (bell)
-        {
-            case Bell.FlankAhead: return 40.0f;
-            case Bell.FullAhead: return 30.0f;
-            case Bell.HalfAhead: return 20.0f;
-            case Bell.SlowAhead: return 10.0f;
-            case Bell.DeadSlowAhead: return 5.0f;
-            case Bell.Stop: return 0.0f;
-            case Bell.DeadSlowAstern: return -5.0f;
-            case Bell.SlowAstern: return -10.0f;
-            case Bell.HalfAstern: return -20.0f;
-            case Bell.FullAstern: return -30.0f;
-            case Bell.FlankAstern: return -40.0f;
-            default: return 0.0f;
+        if (new Dictionary<Bell, float> {
+            { Bell.FlankAhead, 40.0f },
+            { Bell.FullAhead, 30.0f },
+            { Bell.HalfAhead, 20.0f },
+            { Bell.SlowAhead, 10.0f },
+            { Bell.DeadSlowAhead, 5.0f },
+            { Bell.Stop, 0.0f },
+            { Bell.DeadSlowAstern, -5.0f },
+            { Bell.SlowAstern, -10.0f },
+            { Bell.HalfAstern, -20.0f },
+            { Bell.FullAstern, -30.0f },
+            { Bell.FlankAstern, -40.0f }
+        }.TryGetValue(bell, out float targetThrustN)) {
+            return targetThrustN;
         }
+        return 0.0f;
     }
 
-    static public float TargetValueVector(float targetvalue, float currentValue, float startSpeedDecentRange)
-        => (targetvalue - currentValue > 0 ? 1.0f : -1.0f) * Mathf.Clamp(Mathf.Abs(targetvalue - currentValue) / startSpeedDecentRange, 0.0f, 1.0f);
+    static public Bell ChangeBell(Bell bell, int add) {
+        return (int)bell + add <= (int)Bell.MinInvalid ? Bell.FlankAhead :
+               (int)bell + add >= (int)Bell.MaxInvalid ? Bell.FlankAstern :
+               bell + add;
+    }
+
+    static public float TargetValueVector(float targetvalue, float currentValue, float startSpeedDecentRange, float magnitude)
+        => magnitude 
+        * (targetvalue - currentValue > 0 ? 1.0f : -1.0f) 
+        * Mathf.Clamp(Mathf.Abs(targetvalue - currentValue) / startSpeedDecentRange, 0.0f, 1.0f);
 
     float lastTimePressed;
 
     LosAngelsClassFlightII UserControl()
     {
-        const float thrustUp = +1.0f;
-        const float thrustDown = -1.0f;
+        const int thrustUp = -1;
+        const int thrustDown = +1;
         const float pitchUp = -1.0f;
         const float pitchDown = +1.0f;
         const float leftYaw = -1.0f;
@@ -228,9 +234,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // KeyUP
         new Dictionary<KeyCode, System.Action> {
             // Q: Thrust Uo
-            { KeyCode.Q, () => { targetThrustN = Mathf.Clamp(targetThrustN + 5.0f, -40.0f, 80.0f); } },
+            { KeyCode.Q, () => { currentBell = ChangeBell(currentBell, thrustUp); } },
             // Z: Thrust Down
-            { KeyCode.Z, () => { targetThrustN = Mathf.Clamp(targetThrustN - 5.0f, -40.0f, 80.0f); } },
+            { KeyCode.Z, () => { currentBell = ChangeBell(currentBell, thrustDown); } },
             // W: Pitch Down
             { KeyCode.W, () => { targetPitchDeg = Mathf.Clamp(targetPitchDeg + 5.0f, -30.0f, 30.0f); } },
             // S: Pitch Up
@@ -268,12 +274,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
         return this;
     }
 
-    static float PIDAndLimitThrustN(PID pid, float thrustN, float targetThrustN)
-    {
-        thrustN += Mathf.Clamp(pid.run(thrustN, targetThrustN), -10.0f, 10.0f) * dt;
-        return Mathf.Clamp(thrustN, -10.0f, 40.0f);
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -281,7 +281,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
         UserControl();
 
-        thrustN = PIDAndLimitThrustN(thrustController, thrustN, targetThrustN);
+        // control Thrust to target value, 
+        thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, 2.5f, 1.0f) * dt;
+        // PID aileron to target pitch
+        targetAileronDeg = Math.Clamp(aileronController.run(transform.eulerAngles.x, targetPitchDeg), -40.0f, +40.0f);
+        angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
         UpdateVelocity();
         UpdatePosition();

@@ -10,6 +10,31 @@ public static class StaticMath
     public const float airDrag = 1000000f; // placeholder
     public const float circleAreaRatioToSquare = (1.0f * 1.0f) / (0.5f * 0.5f * Mathf.PI);
 
+    public static float TruePitch(this Transform transform)
+    {
+        return TruePitch(transform.eulerAngles.x);
+    }
+    public static float TruePitch(this float eulerAngles)
+    {
+        if (eulerAngles >= 0 && eulerAngles < 90)
+        {
+            return -eulerAngles;
+        }
+        if (eulerAngles >= 90 && eulerAngles < 180)
+        {
+            return - 180 + eulerAngles;
+        }
+        if (eulerAngles >= 180 && eulerAngles < 270)
+        {
+            return eulerAngles - 180;
+        }
+        if (eulerAngles >= 270 && eulerAngles < 360)
+        {
+            return 360 - eulerAngles;
+        }
+        return 0;
+    }
+
     /// <summary>
     /// Calculate velocity increase per time.
     /// </summary>

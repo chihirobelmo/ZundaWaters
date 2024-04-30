@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 using UnityEngine;
 using static StaticMath;
 
@@ -26,7 +27,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
     public float targetPitchDeg = 0;
     public float targetAileronDeg = 0;
 
-    PID aileronController = new PID(5.0f, 1.5f, 0.0f);
+    PID aileronController = new PID(5.0f, 1.5f, 0);
 
     public enum Bell : int
     {
@@ -219,12 +220,14 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     float lastTimePressed;
 
+    public float truePitch;
+
     LosAngelsClassFlightII UserControl()
     {
         const int thrustUp = -1;
         const int thrustDown = +1;
-        const float pitchUp = -1.0f;
-        const float pitchDown = +1.0f;
+        const float pitchUp = +1.0f;
+        const float pitchDown = -1.0f;
         const float leftYaw = -1.0f;
         const float rightYaw = +1.0f;
 
@@ -238,9 +241,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
             // Z: Thrust Down
             { KeyCode.Z, () => { currentBell = ChangeBell(currentBell, thrustDown); } },
             // W: Pitch Down
-            { KeyCode.W, () => { targetPitchDeg = Mathf.Clamp(targetPitchDeg + 5.0f, -30.0f, 30.0f); } },
+            { KeyCode.W, () => { targetPitchDeg = Mathf.Clamp(targetPitchDeg - 5.0f, -15.0f, 15.0f); aileronController.reset(); } },
             // S: Pitch Up
-            { KeyCode.S, () => { targetPitchDeg = Mathf.Clamp(targetPitchDeg - 5.0f, -30.0f, 30.0f); } },
+            { KeyCode.S, () => { targetPitchDeg = Mathf.Clamp(targetPitchDeg + 5.0f, -15.0f, 15.0f); aileronController.reset(); } },
         }
         .ToList()
         .Select(x => { if (Input.GetKeyUp(x.Key)) x.Value(); return 0; })
@@ -284,7 +287,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // control Thrust to target value, 
         thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, 2.5f, 1.0f) * dt;
         // PID aileron to target pitch
-        targetAileronDeg = Math.Clamp(aileronController.run(transform.eulerAngles.x, targetPitchDeg), -40.0f, +40.0f);
+        truePitch = transform.TruePitch();
+        targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
         angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
         UpdateVelocity();

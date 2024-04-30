@@ -9,38 +9,50 @@ using static StaticMath;
 public class PID
 {
     // 定数設定 ===============
-    float KP = 0.0001f;  // Pゲイン
+    float KP = 0.001f;  // Pゲイン
     float KD = 0;   // Dゲイン
     float KI = 0;   // Iゲイン
 
     // 変数初期化 ===============
-    float e_pre = 0; // 微分の近似計算のための初期値
-    float ie = 0;    // 積分の近似計算のための初期値
+    long e_pre = 0; // 微分の近似計算のための初期値
+    long ie = 0;    // 積分の近似計算のための初期値
+
+    public void reset()
+    {
+        e_pre = 0;
+        ie = 0;
+    }
 
     public PID() { }
 
+    /// <summary>
+    /// KP,KD,KI = 0.0001 order in long
+    /// </summary>
     public PID(float kp, float kd, float ki) {
         KP = kp;
         KD = kd;
         KI = ki;
     }
 
-    public float run(float current, float target) {
+    const int significant = 1000;
 
+    public float run(float current, float target)
+    {
         // 現時刻における情報を取得
-        float y = current; // 出力を取得。例:センサー情報を読み取る処理
-        float r = target; // 目標値を取得。目標値が一定ならその値を代入する
+        long y = (long)(current * 1000); // 出力を取得。例:センサー情報を読み取る処理
+        long r = (long)(target * 1000); // 目標値を取得。目標値が一定ならその値を代入する
+        long t = (long)(dt * 1000);
 
         // PID制御の式より、制御入力uを計算
-        float e = r - y;                // 誤差を計算
-        float de = (e - e_pre) / dt;        // 誤差の微分を近似計算
-        ie = ie + (e + e_pre) * dt / 2; // 誤差の積分を近似計算
+        long e = r - y;                // 誤差を計算
+        long de = (e - e_pre) / t;        // 誤差の微分を近似計算
+        ie += (e + e_pre) * t / 2; // 誤差の積分を近似計算
         float u = KP * e + KI * ie + KD * de; // PID制御の式にそれぞれを代入
 
         // 次のために現時刻の情報を記録
         e_pre = e;
 
-        return u;
+        return u / 1000;
     }
 }
 

@@ -35,14 +35,18 @@ Create an Open Source Casual Level Sub Sim to release on Steam (for free)
 ## Short Term (Let's keep it practical first)
 
 Create an Open Source Casual Level Sub Sim to release at https://www.freem.ne.jp/ or https://unityroom.com/
-- Unity 2018.2.8f1 (might be updated later)
 - Mainly for Japanese language
+- Unity (Latest)
 - Small size Combat Area
 - Random Scenarios
 - Decent Tutorial
 - Multiplayer Host Control Game Speed Up
 - PvP and PvE(control same ship with clients, you can see the same sonar screen)
 - Zundamon Voice
+
+# unity Version
+
+2022.3.26f1
 
 # Zunda?
 

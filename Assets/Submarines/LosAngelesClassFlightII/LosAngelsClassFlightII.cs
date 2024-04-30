@@ -47,7 +47,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         MaxInvalid // Please keep this at end.
     }
 
-    public bool IsPropellerUnderWater => Object3DPropellerAxis.position.y <= 0;
+    public bool IsPropellerUnderWater => Object3DPropellerAxis.position.y <= 2.5f;
 
     /// <summary>
     /// Angle aileron in degree per second.
@@ -79,6 +79,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
     /// </summary>
     [SerializeField] Vector3 angularSpeedDeg;
 
+    /// <summary>
+    /// degree per second ship rotates around gc to xyz axis.
+    /// </summary>
+    [SerializeField] Vector3 angularSpeedInAirDeg;
+
     private Vector3 lastPosition;
 
     /// <summary>
@@ -96,33 +101,36 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     LosAngelsClassFlightII UpdateVelocity()
     {
+        Vector3 shipForward = transform.position + transform.forward * kLengthMeter;
+        Vector3 shipAstern = transform.position - transform.forward * kLengthMeter;
+        Vector3 propeller = transform.position - transform.forward * kLengthMeter;
 
-        // Divide ship to each points
-        Vector3 ShipForward = transform.position + transform.forward * kLengthMeter;
-        Vector3 ShipAstern = transform.position - transform.forward * kLengthMeter;
-        float vRotation = VRotation(angularSpeedDeg.x * Mathf.Deg2Rad, kLengthMeter);
+        Vector3 g = transform.position.y > 0 ? Vector3.up * -gravity : Vector3.up * -(gravity - ballastAirMPS2);
+        Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN : new Vector3();
 
-        // ship forward in air
-        if (ShipForward.y > 0)
+        if (transform.position.y > 0) // ship in the air
         {
-            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity / 2.0f, velocityMPS) * dt;
-            angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd fall
+            velocityMPS += VtDt(airDrag, kMass, thrust, velocityMPS) * dt;
+            velocityMPS.y += g.y * dt;
         }
         else
         {
-            velocityMPS += VtDt(waterDrag, kMass, Vector3.up * -(gravity - ballastAirMPS2) / 2.0f, velocityMPS) * dt;
-            angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd up
+            velocityMPS += VtDt(waterDrag, kMass, thrust, velocityMPS) * dt;
+            velocityMPS.y += g.y * dt;
         }
 
-        if (ShipAstern.y > 0)
-        {
-            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity / 2.0f, velocityMPS) * dt;
-            angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft fall
+        // foward fall
+        if (shipForward.y > 0) {
+            angularSpeedInAirDeg.x += OmegaRad(gravity, kLengthMeter) * Mathf.Rad2Deg * dt;
         }
-        else
+        // astern fall
+        if (shipAstern.y > 0)
         {
-            velocityMPS += VtDt(waterDrag, kMass, transform.forward * thrustN + Vector3.up * -(gravity - ballastAirMPS2) / 2.0f, velocityMPS) * dt;
-            angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft up
+            angularSpeedInAirDeg.x -= OmegaRad(gravity, kLengthMeter) * Mathf.Rad2Deg * dt;
+        }
+        // both under water
+        if (shipForward.y <= 0 && shipAstern.y <= 0) {
+            angularSpeedInAirDeg.x = TargetValueVector(0.0f, angularSpeedInAirDeg.x, 5.0f, 10.0f) * dt;
         }
 
         return this;
@@ -139,7 +147,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // somehow input yaw also inputs pitch so placeholder for now.
         Vector3 surfacePowerDeg = new Vector3(angleAileronDeg, angleRudderDeg, 0.0f);
 
-        transform.rotation *= Quaternion.Euler(((angularSpeedDeg + surfacePowerDeg) * Mathf.Deg2Rad).Radt() * dt);
+        transform.rotation *= Quaternion.Euler(((angularSpeedDeg + surfacePowerDeg + angularSpeedInAirDeg) * Mathf.Deg2Rad).Radt() * dt);
 
         return this;
     }
@@ -178,17 +186,17 @@ public class LosAngelsClassFlightII : MonoBehaviour
     static public float TargetThrustN(Bell bell)
     {
         if (new Dictionary<Bell, float> {
-            { Bell.FlankAhead, 10.0f },
-            { Bell.FullAhead, 8.0f },
-            { Bell.HalfAhead, 6.0f },
-            { Bell.SlowAhead, 4.0f },
-            { Bell.DeadSlowAhead, 2.0f },
+            { Bell.FlankAhead, 8.0f },
+            { Bell.FullAhead, 6.0f },
+            { Bell.HalfAhead, 4.0f },
+            { Bell.SlowAhead, 2.0f },
+            { Bell.DeadSlowAhead, 1.0f },
             { Bell.Stop, 0.0f },
-            { Bell.DeadSlowAstern, -2.0f },
-            { Bell.SlowAstern, -4.0f },
-            { Bell.HalfAstern, -6.0f },
-            { Bell.FullAstern, -8.0f },
-            { Bell.FlankAstern, -10.0f }
+            { Bell.DeadSlowAstern, -1.0f },
+            { Bell.SlowAstern, -2.0f },
+            { Bell.HalfAstern, -3.0f },
+            { Bell.FullAstern, -4.0f },
+            { Bell.FlankAstern, -5.0f }
         }.TryGetValue(bell, out float targetThrustN)) {
             return targetThrustN;
         }

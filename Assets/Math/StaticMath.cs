@@ -56,6 +56,12 @@ public static class StaticMath
     /// <returns></returns>
     public static Vector3 VtDt(float k, float m, Vector3 a, Vector3 v) => (-k / m) * (v - m * a / k);
 
+    public static Vector3 VRotation(Vector3 omegaRad, float radius) => omegaRad * radius;
+    public static float VRotation(float omegaRad, float radius) => omegaRad * radius;
+
+    public static Vector3 OmegaRad(Vector3 v, float radius) => v / (0.0001f + radius);
+    public static float OmegaRad(float v, float radius) => v / (0.0001f + radius);
+
     /// <summary>
     /// Assume submarine body as a ellipsoid. Estimate projected area to each side/top/forward axis of ship in m^2.
     /// </summary>

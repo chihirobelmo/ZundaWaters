@@ -5,6 +5,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using UnityEngine;
 using static StaticMath;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 public class LosAngelsClassFlightII : MonoBehaviour
 {
@@ -95,13 +96,35 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     LosAngelsClassFlightII UpdateVelocity()
     {
-        // propeller under the  water
-        if (IsPropellerUnderWater)
-            velocityMPS += VtDt(waterDrag, kMass, transform.forward * thrustN, velocityMPS) * dt;
-        // cancel inartial velocity to ship right and up axis
-        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, transform.right) * dt;
-        velocityMPS -= Vector3.ProjectOnPlane(velocityMPS, transform.up) * dt;
-        // TBD: calc drag to cancel inartial velocity, use ElipsoidProjectedAreaM2.
+
+        // Divide ship to each points
+        Vector3 ShipForward = transform.position + transform.forward * kLengthMeter;
+        Vector3 ShipAstern = transform.position - transform.forward * kLengthMeter;
+        float vRotation = VRotation(angularSpeedDeg.x * Mathf.Deg2Rad, kLengthMeter);
+
+        // ship forward in air
+        if (ShipForward.y > 0)
+        {
+            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity, velocityMPS) * dt / 2.0f;
+            angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd fall
+        }
+        else
+        {
+            velocityMPS += VtDt(waterDrag, kMass, Vector3.up * -(gravity - ballastAirMPS2), velocityMPS) * dt / 2.0f;
+            angularSpeedDeg.x -= ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // fwd up
+        }
+
+        if (ShipAstern.y > 0)
+        {
+            velocityMPS += VtDt(airDrag, kMass, Vector3.up * -gravity, velocityMPS) * dt / 2.0f;
+            angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft fall
+        }
+        else
+        {
+            velocityMPS += VtDt(waterDrag, kMass, transform.forward * thrustN + Vector3.up * -(gravity - ballastAirMPS2), velocityMPS) * dt / 2.0f;
+            angularSpeedDeg.x += ((vRotation * dt / kLengthMeter) * Mathf.Rad2Deg); // aft up
+        }
+
         return this;
     }
 
@@ -109,49 +132,14 @@ public class LosAngelsClassFlightII : MonoBehaviour
         transform.position += velocityMPS * dt;
         return this;
     }
-    LosAngelsClassFlightII CalcAndApplyGravityAndFloat() {
-
-        // Divide ship to each cell
-        IEnumerable<Vector3> eachCellOfShip =
-            from z in new int[] { -55, -27, 27, 55 }
-            select transform.position + transform.forward * z;
-
-        int cellCount = eachCellOfShip.Count();
-
-        // Calculate gravity and float makes velocity and rotation for each cell.
-        eachCellOfShip.ToList().ForEach(p =>
-        {
-            // calculate N from gravity and float at each cell.
-            // remember: v = omega * radius
-            float omega = angularSpeedDeg.x;
-            float radius = /*avoid 0 divide*/0.001f + (/*offset*/p.z - /*gravity center*/transform.position.z);
-
-            // calc dV = dOmega * radius
-            Vector3 dV = p.y > 0 ?
-            // in air, current speed is considered "angular speed * radius", so angular speed is the omega
-            VtDt(waterDrag, kMass, -Vector3.up * gravity, angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount) :
-            // under water
-            VtDt(waterDrag, kMass, -Vector3.up * (gravity - ballastAirMPS2), angularSpeedDeg * Mathf.Deg2Rad * radius) * dt * (1.0f / cellCount);
-            // TBD: not sure why but only calculating y axis were not working well...
-            // and calc Vector3 like we do now makes X axis movement...so we remove this from Vector3.
-            dV.x = 0; dV.z = 0;
-
-            // apply dV to velocity;
-            velocityMPS += dV;
-            // apply dV = omega * radius to angular speed, consider dV = Omega. cos more radius more speed should apply...
-            angularSpeedDeg.x -= Mathf.Rad2Deg * dV.y * radius;
-        });
-        return this;
-    }
 
     LosAngelsClassFlightII UpdateOrientaion()
     {
         // yaw and pitch
         // somehow input yaw also inputs pitch so placeholder for now.
-        angularSpeedDeg.y = angleRudderDeg; // Mathf.Clamp(angularSpeedDeg.y.Deg() + (angleRudderDeg - angularSpeedDeg.y).Degt() * dt, -80, 80);
-        angularSpeedDeg.x = angleAileronDeg; // Mathf.Clamp(angularSpeedDeg.x.Deg() + (angleAileronDeg - angularSpeedDeg.x).Degt() * dt, -40, 40);
+        Vector3 surfacePowerDeg = new Vector3(angleAileronDeg, angleRudderDeg, 0.0f);
 
-        transform.rotation *= Quaternion.Euler((angularSpeedDeg * Mathf.Deg2Rad).Radt() * dt);
+        transform.rotation *= Quaternion.Euler(((angularSpeedDeg + surfacePowerDeg) * Mathf.Deg2Rad).Radt() * dt);
 
         return this;
     }
@@ -294,7 +282,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
         UpdateVelocity();
         UpdatePosition();
         UpdateOrientaion();
-        CalcAndApplyGravityAndFloat();
         StabilizeRoll();
         Animation();
         EndFrameJob();

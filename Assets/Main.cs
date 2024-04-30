@@ -19,6 +19,8 @@ public class Main : MonoBehaviour {
 
     static public Vector3 playerPosition;
 
+    public static float timeScale = 1.0f;
+
     // Use this for initialization
     void Start ()
     {
@@ -27,10 +29,25 @@ public class Main : MonoBehaviour {
         clientMfdPanel2 = Instantiate(mfdpanel2);
         clientMainCamera = mainCamera;
     }
+
+    void KeyDown()
+    {
+        // KeyUP
+        new Dictionary<KeyCode, System.Action> {
+            // ]: Thrust Uo
+            { KeyCode.RightBracket, () => { Mathf.Clamp(timeScale *= 2.0f, 1.0f, 128.0f); } },
+            // [: Thrust Down
+            { KeyCode.LeftBracket, () => { Mathf.Clamp(timeScale /= 2.0f, 1.0f, 128.0f); } },
+        }
+        .ToList()
+        .Select(x => { if (Input.GetKeyUp(x.Key)) x.Value(); return 0; })
+        .Sum();
+    }
 	
 	// Update is called once per frame
 	void Update ()
     {
+        KeyDown();
         ResetFloatingPointOrigin();
     }
 

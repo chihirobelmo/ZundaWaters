@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 public static class StaticMath
 {
@@ -89,7 +90,7 @@ public static class StaticMath
     /// <summary>
     /// this is the time since last frame. so can be considered delta time.
     /// </summary>
-    public static float dt => Time.deltaTime;
+    public static float dt => Time.deltaTime * Main.timeScale;
 
     /// <summary>
     /// just to indicate its velocity change per time.

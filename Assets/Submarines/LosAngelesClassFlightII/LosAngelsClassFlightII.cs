@@ -105,7 +105,14 @@ public class LosAngelsClassFlightII : MonoBehaviour
         Vector3 shipAstern = transform.position - transform.forward * kLengthMeter;
         Vector3 propeller = transform.position - transform.forward * kLengthMeter;
 
-        Vector3 g = transform.position.y > 0 ? Vector3.up * -gravity : Vector3.up * -(gravity - ballastAirMPS2);
+        var dividedPos =
+        from z in Enumerable.Range((int)(-kLengthMeter / 2), (int)(kLengthMeter / 2))
+        from y in Enumerable.Range(-5, 5)
+        select transform.position + transform.forward * z + transform.up * y;
+
+        var affectingBallast = dividedPos.Select(pos => pos.y <= 0 ? ballastAirMPS2 : 0).Average();
+
+        Vector3 g = Vector3.up * -(gravity - affectingBallast);
         Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN : new Vector3();
 
         if (transform.position.y > 0) // ship in the air

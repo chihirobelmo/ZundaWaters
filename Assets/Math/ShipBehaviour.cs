@@ -159,7 +159,8 @@ public class ShipBehaviour : MonoBehaviour
         float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
             * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
 
-        Vector3 buyonancyRotation = angular + new Vector3((float)(forceRad / inartiaX), 0, 0) * Mathf.Rad2Deg * dt;
+        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
+        angular += VtDt(waterDrag, spec.kMassKg, buyonancyRotation, angular * Mathf.Deg2Rad) * Mathf.Rad2Deg * dt;
 
         // gravity vs buyonancy result
         Vector3 g = Vector3.up * forceG / spec.kMassKg;
@@ -179,10 +180,16 @@ public class ShipBehaviour : MonoBehaviour
 
         // position and rotation update
         Vector3 position = ship.position + velocity * dt;
-        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt + buyonancyRotation * dt);
+        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt + angular * dt);
 
-        // Stabilize Roll which might be game-ish idea but needed for player.
-        rotation = Quaternion.Euler(rotation.eulerAngles.x, rotation.eulerAngles.y, 0.0f);
+        // Limit physics don't go crazy
+        // Eventually this is not a phycsics simulatin aimed.
+        rotation = Quaternion.Euler(
+            rotation.eulerAngles.x > 270 ? Mathf.Clamp(rotation.eulerAngles.x, 345, 360) :
+            rotation.eulerAngles.x < 90 ? Mathf.Clamp(rotation.eulerAngles.x, 0, 15) : 0,
+            rotation.eulerAngles.y,
+            Mathf.Clamp(rotation.eulerAngles.y, -15f, 15f));
+        buyonancyRotation.x = Mathf.Clamp(buyonancyRotation.x, -15f, 15f);
 
         // update ship position and rotation.
         ship.position = position;

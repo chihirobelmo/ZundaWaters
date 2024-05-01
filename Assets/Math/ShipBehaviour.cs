@@ -140,7 +140,7 @@ public class ShipBehaviour : MonoBehaviour
         select ship.forward * z;
 
         // rotate with each point gravity and buyonancy.
-        var force =
+        var forceRad =
             dividedPos
             .Zip(length, (pos, length) =>
             {
@@ -150,12 +150,21 @@ public class ShipBehaviour : MonoBehaviour
             })
             .Sum();
 
+        var forceG =
+            dividedPos.Select(pos =>
+            {
+                float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                float force = -g * (spec.kMassKg / dividedPos.Count());
+                return force;
+            })
+            .Sum();
+
         // inartia of ship
         float inartia = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter;
-        Vector3 buyonancyRotation = new Vector3((float)(force / inartia) * Mathf.Rad2Deg * dt, 0, 0);
+        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartia) * Mathf.Rad2Deg * dt, 0, 0);
 
         // gravity vs buyonancy result
-        Vector3 g = Vector3.up * force / spec.kMassKg;
+        Vector3 g = Vector3.up * forceG / spec.kMassKg;
 
         // thrust available if only propeller under water
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();

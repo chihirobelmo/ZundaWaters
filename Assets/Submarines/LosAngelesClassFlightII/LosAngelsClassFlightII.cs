@@ -10,7 +10,7 @@ using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 public class LosAngelsClassFlightII : MonoBehaviour
 {
     // Ship Parameters
-    [SerializeField] const float kMass = 7000/*ton displacement*/ * 1000/*kg*/ * 2.0f/*assume actual mass has twice displacement*/;
+    [SerializeField] const float kMass = 7000/*ton displacement*/ * 1000/*kg*/;
     [SerializeField] const float kThrustChangeRate = 0.1f;
     [SerializeField] const float kSurfaceChangeRate = 30.0f;
     [SerializeField] const float kBallastChangeRate = 3.0f;
@@ -113,71 +113,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
     {
         for (int sec = 0; sec < 600; sec++)
         {
-            velocityMPS += VtDt(airDrag, kMass, transform.forward * TargetThrustN(currentBell) / kMass, velocityMPS);
+            velocityMPS += VtDt(waterDrag, kMass, transform.forward * TargetThrustN(currentBell) / kMass, velocityMPS);
         }
         lastPosition = transform.position;
-    }
-
-    LosAngelsClassFlightII UpdateVelocityAndBuyonancy()
-    {
-        // ship forward and astern position in world space meter.
-        Vector3 shipForward = transform.position + transform.forward * kLengthMeter * 0.5f;
-        Vector3 shipAstern = transform.position - transform.forward * kLengthMeter * 0.5f;
-
-        // divide ships in each cell to calculate gravity and buyonancy.
-        var dividedPos =
-        from z in Enumerable.Range((int)(-kLengthMeter / 2), (int)(kLengthMeter / 2))
-        from y in Enumerable.Range(-5, 5)
-        select transform.position + transform.forward * z + transform.up * y;
-
-        // ballast affects power change by how percentage ship under water.
-        var affectingBallast = dividedPos.Select(pos => pos.y <= 0 ? ballastAirMPS2 : 0).Average();
-
-        // gravity vs buyonancy result
-        Vector3 g = Vector3.up * -(gravity - affectingBallast);
-
-        // thrust available if only propeller under water
-        Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN / kMass : new Vector3();
-
-        // Velocity update
-        if (transform.position.y > 0) // ship in the air
-        {
-            velocityMPS += VtDt(airDrag, kMass, thrust, velocityMPS) * dt;
-        }
-        else // under water
-        {
-            velocityMPS += VtDt(waterDrag, kMass, thrust, velocityMPS) * dt;
-        }
-        velocityMPS.y += g.y * dt;
-
-        //// rotate with gravity ////
-        
-        // TBD: still not sure about the best solution.
-        Vector3 shipVector = shipForward - shipAstern;
-
-        // the point ship is on the surface.
-        Vector3 x0 = shipAstern;
-        Vector3 n = Vector3.up; // normal of surface
-        Vector3 m = (shipForward - shipAstern).normalized; // velocity;
-        float h = n.magnitude; // = (n,x) where x is surface point we want to calc.
-        Vector3 surfacePoint = x0 + ((h - Vector3.Dot(n,x0)) / Vector3.Dot(n,m)) * m;
-
-        if (shipForward.y > 0 && shipAstern.y <= 0) {
-            // forward fall with gravity
-            angularSpeedInAirDeg.x += OmegaRad(gravity, (shipForward - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
-            // astern float with buyonancy
-            angularSpeedInAirDeg.x += OmegaRad(gravity - affectingBallast, (shipAstern - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
-        }
-        // astern fall
-        else if (shipForward.y <= 0 && shipAstern.y > 0)
-        {
-            // astern fall with gravity
-            angularSpeedInAirDeg.x -= OmegaRad(gravity, (shipAstern - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
-            // forward float with buyonancy
-            angularSpeedInAirDeg.x -= OmegaRad(gravity - affectingBallast, (shipForward - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
-        }
-
-        return this;
     }
 
     LosAngelsClassFlightII UpdatePosition() {
@@ -230,17 +168,17 @@ public class LosAngelsClassFlightII : MonoBehaviour
     static public float TargetThrustN(Bell bell)
     {
         if (new Dictionary<Bell, float> {
-            { Bell.FlankAhead, 1.5f * kMass },
-            { Bell.FullAhead, 1.2f * kMass },
-            { Bell.HalfAhead, 0.9f * kMass },
-            { Bell.SlowAhead, 0.6f * kMass },
-            { Bell.DeadSlowAhead, 0.3f * kMass },
+            { Bell.FlankAhead, 5.0f * kMass },
+            { Bell.FullAhead, 4.0f * kMass },
+            { Bell.HalfAhead, 3.0f * kMass },
+            { Bell.SlowAhead, 2.0f * kMass },
+            { Bell.DeadSlowAhead, 1.0f * kMass },
             { Bell.Stop, 0.0f },
-            { Bell.DeadSlowAstern, -0.3f * kMass },
-            { Bell.SlowAstern, -0.6f * kMass },
-            { Bell.HalfAstern, -0.9f * kMass },
-            { Bell.FullAstern, -1.2f * kMass },
-            { Bell.FlankAstern, -1.5f * kMass }
+            { Bell.DeadSlowAstern, -1.0f * kMass },
+            { Bell.SlowAstern, -2.0f * kMass },
+            { Bell.HalfAstern, -3.0f * kMass },
+            { Bell.FullAstern, -4.0f * kMass },
+            { Bell.FlankAstern, -5.0f * kMass }
         }.TryGetValue(bell, out float targetThrustN)) {
             return targetThrustN;
         }
@@ -328,8 +266,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
         thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, kMass, kMass) * dt;
         // PID aileron to target pitch
         truePitch = transform.TruePitch();
-        targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
-        angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
+        //targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
+        //angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
         (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(
             GetComponent<Rigidbody>(),

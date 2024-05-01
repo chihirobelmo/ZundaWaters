@@ -126,7 +126,7 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        IEnumerable<float> devz = new float[] { -spec.kLengthMeter * 0.25f, +spec.kLengthMeter * 0.25f };
+        IEnumerable<float> devz = new float[] { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
         IEnumerable<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter);
 
         var dividedPos =
@@ -134,19 +134,15 @@ public class ShipBehaviour : MonoBehaviour
         from y in devy
         select ship.position + ship.forward * z + ship.up * y;
 
-        var length =
-        from z in devz
-        select ship.forward * z;
-
         // rotate with each point gravity and buyonancy.
         var forceRad =
             devz
-            .Zip(length, (z, length) =>
+            .Select(z =>
             {
                 Vector3 pos = ship.position + ship.forward * z;
                 float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                float force = length.magnitude * -g * (spec.kMassKg / dividedPos.Count());
-                return force;
+                float force = z * -g * (spec.kMassKg / devz.Count());
+                return force * ship.TruePitch().Abs().Cos();
             })
             .Sum();
 
@@ -162,7 +158,8 @@ public class ShipBehaviour : MonoBehaviour
         // inartia of ship
         float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
             * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
-        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX) * Mathf.Rad2Deg * dt, 0, 0);
+
+        Vector3 buyonancyRotation = angular + new Vector3((float)(forceRad / inartiaX), 0, 0) * Mathf.Rad2Deg * dt;
 
         // gravity vs buyonancy result
         Vector3 g = Vector3.up * forceG / spec.kMassKg;
@@ -171,7 +168,11 @@ public class ShipBehaviour : MonoBehaviour
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();
 
         // Velocity update
-        velocity += VtDt(ship.position.y > 0 ? airDrag : waterDrag, spec.kMassKg, g + thrust / spec.kMassKg, velocity) * dt;
+        velocity += VtDt(
+            ship.position.y > spec.kRadiusMeter ? airDrag : waterDrag, 
+            spec.kMassKg, 
+            g + thrust / spec.kMassKg, 
+            velocity) * dt;
 
         // yaw and pitch
         Vector3 surfacePowerDeg = new Vector3(angleAileronDeg, angleRudderDeg, 0.0f);
@@ -187,7 +188,7 @@ public class ShipBehaviour : MonoBehaviour
         ship.position = position;
         ship.rotation = rotation;
 
-        return Tuple.Create(velocity, rotation.eulerAngles);
+        return Tuple.Create(velocity, buyonancyRotation);
     }
 
     static public Bell ChangeBell(Bell bell, int add)

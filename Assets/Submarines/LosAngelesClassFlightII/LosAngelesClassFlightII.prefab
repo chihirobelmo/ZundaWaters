@@ -467,6 +467,8 @@ GameObject:
   - component: {fileID: 215554259076441332}
   - component: {fileID: 6742146486711174227}
   - component: {fileID: 115023954265341789}
+  - component: {fileID: 1117183183778855881}
+  - component: {fileID: 5427811178702247541}
   m_Layer: 0
   m_Name: LosAngelesClassFlightII
   m_TagString: Untagged
@@ -576,6 +578,48 @@ MonoBehaviour:
   angularSpeedDeg: {x: 0, y: 0, z: 0}
   angularSpeedInAirDeg: {x: 0, y: 0, z: 0}
   truePitch: 0
+--- !u!135 &1117183183778855881
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346778154232876}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 3.68
+  m_Center: {x: 0, y: -2.83, z: 42.81}
+--- !u!135 &5427811178702247541
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346778154232876}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 1
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 3.46
+  m_Center: {x: 0, y: -2.9, z: -45.31}
 --- !u!1 &1379887190492920
 GameObject:
   m_ObjectHideFlags: 0

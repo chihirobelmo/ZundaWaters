@@ -36,6 +36,10 @@ public static class StaticMath
         return 0;
     }
 
+    public static float Cos(this float theta) => Mathf.Cos(theta);
+    public static float Sin(this float theta) => Mathf.Sin(theta);
+    public static float Abs(this float theta) => Mathf.Abs(theta);
+
     /// <summary>
     /// Calculate velocity increase per time.
     /// </summary>

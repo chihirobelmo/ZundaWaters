@@ -331,7 +331,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
         angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
-        ShipBehaviour.UpdateVPAR(transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
+        (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
              thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
 
         Animation();

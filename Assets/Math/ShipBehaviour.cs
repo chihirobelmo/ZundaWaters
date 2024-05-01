@@ -124,14 +124,10 @@ public class ShipBehaviour : MonoBehaviour
     /// <summary>
     /// Return Vecloty in m/s, Position in meter, and Angular in degree, and Rotation i nquateonion.
     /// </summary>
-    public static void UpdateVPAR(
+    public static Tuple<Vector3, Vector3> UpdateVPAR(
         Transform ship, Transform propeller, ShipSpec spec, Vector3 velocity, Vector3 angular, 
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
-        // ship forward and astern position in world space meter.
-        Vector3 shipForward = ship.position + ship.forward * spec.kLengthMeter * 0.5f;
-        Vector3 shipAstern = ship.position - ship.forward * spec.kLengthMeter * 0.5f;
-
         // divide ships in each cell to calculate gravity and buyonancy.
         var dividedPos =
         from z in Enumerable.Range((int)(-spec.kLengthMeter / 2), (int)(+spec.kLengthMeter / 2))
@@ -148,8 +144,7 @@ public class ShipBehaviour : MonoBehaviour
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();
 
         // Velocity update
-        velocity += VtDt(ship.position.y > 0 ? airDrag : waterDrag, spec.kMassKg, thrust / spec.kMassKg, velocity) * dt;
-        velocity.y += g.y;
+        velocity += VtDt(ship.position.y > 0 ? airDrag : waterDrag, spec.kMassKg, g + thrust / spec.kMassKg, velocity) * dt;
 
         // yaw and pitch
         Vector3 surfacePowerDeg = new Vector3(angleAileronDeg, angleRudderDeg, 0.0f);
@@ -167,6 +162,10 @@ public class ShipBehaviour : MonoBehaviour
 
         //// rotate with gravity ////
 
+        // ship forward and astern position in world space meter.
+        Vector3 shipForward = ship.position + ship.forward * spec.kLengthMeter * 0.5f;
+        Vector3 shipAstern = ship.position - ship.forward * spec.kLengthMeter * 0.5f;
+
         // the point ship is on the surface.
         Vector3 x0 = shipAstern;
         Vector3 n = Vector3.up; // normal of surface
@@ -183,22 +182,26 @@ public class ShipBehaviour : MonoBehaviour
         float fallLength =
             frontAboveSurface ? (shipForward - surfacePoint).magnitude :
             asternAboveSurface ? (shipAstern - surfacePoint).magnitude :
-            0.0001f;
+            0;
 
         float buyoLength =
             frontAboveSurface ? (shipAstern - surfacePoint).magnitude :
             asternAboveSurface ? (shipForward - surfacePoint).magnitude :
-            0.0001f;
+            0;
 
-        // fall with gravity
-        angular.x += rotationWay * OmegaRad(gravity, fallLength);
-        // float with buyonancy
-        angular.x += rotationWay * OmegaRad(gravity - affectingBallast, buyoLength);
-        // should we reset them?
-        angular.x = bothUnderWaterOrInAir ? 0.0f : angular.x;
+        float gravityRotate = 0;
+        if (fallLength > 0 || buyoLength > 0)
+        {
+            // fall with gravity
+            gravityRotate += rotationWay * OmegaRad(gravity, fallLength);
+            // float with buyonancy
+            gravityRotate += rotationWay * OmegaRad(gravity - affectingBallast, buyoLength);
 
-        ship.RotateAround(surfacePoint - ship.position, ship.right, angular.x * Mathf.Rad2Deg * dt);
-        //ship.rotation *= Quaternion.Euler(angular * dt);
+            ship.RotateAround(surfacePoint, ship.right, gravityRotate * Mathf.Rad2Deg * dt);
+            //ship.rotation *= Quaternion.Euler(gravityRotate * dt);
+        }
+
+        return Tuple.Create(velocity, rotation.eulerAngles);
     }
 
     static public Bell ChangeBell(Bell bell, int add)

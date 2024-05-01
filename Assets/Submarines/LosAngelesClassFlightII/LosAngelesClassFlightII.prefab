@@ -103,7 +103,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300012, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1118388524350332
@@ -209,7 +209,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300000, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1250656213177674
@@ -315,7 +315,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300006, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1257799928052576
@@ -452,7 +452,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300004, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1346778154232876
@@ -464,10 +464,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4518908406496110}
-  - component: {fileID: 1294702487593147580}
   - component: {fileID: 136525012783948108}
   - component: {fileID: 65755444854685802}
   - component: {fileID: 215554259076441332}
+  - component: {fileID: 6742146486711174227}
+  - component: {fileID: 115023954265341789}
   m_Layer: 0
   m_Name: LosAngelesClassFlightII
   m_TagString: Untagged
@@ -491,24 +492,6 @@ Transform:
   - {fileID: 4202724740736730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1294702487593147580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346778154232876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  angleAileronDeg: 0
-  angleRudderDeg: 0
-  ballastAirMPS2: 9.8
-  thrustN: 7
-  velocityMPS: {x: 0, y: 0, z: 0}
-  angularSpeedDeg: {x: 0, y: 0, z: 0}
 --- !u!136 &136525012783948108
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -526,7 +509,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 1
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 5
   m_Height: 110
@@ -549,7 +532,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 1
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1.72, y: 6.42, z: 8.54}
   m_Center: {x: 0, y: 4.88, z: 15.19}
@@ -586,6 +569,59 @@ ReflectionProbe:
   m_UseOcclusionCulling: 1
   m_Importance: 1
   m_CustomBakedTexture: {fileID: 0}
+--- !u!54 &6742146486711174227
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346778154232876}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.01
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 64
+  m_CollisionDetection: 0
+--- !u!114 &115023954265341789
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1346778154232876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  knot: 0
+  trueX: 0
+  trueZ: 0
+  currentBell: 5
+  targetPitchDeg: 0
+  targetAileronDeg: 0
+  angleAileronDeg: 0
+  angleRudderDeg: 0
+  ballastAirMPS2: 9.8
+  thrustN: 10
+  velocityMPS: {x: 0, y: 0, z: 0}
+  angularSpeedDeg: {x: 0, y: 0, z: 0}
+  angularSpeedInAirDeg: {x: 0, y: 0, z: 0}
+  truePitch: 0
 --- !u!1 &1379887190492920
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,7 +726,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300010, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1536502434732288
@@ -796,7 +832,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300008, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1684386398711034
@@ -942,7 +978,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300002, guid: 709ec7359fd32954096ea4cb2d305929, type: 3}
 --- !u!1 &1828925573238838

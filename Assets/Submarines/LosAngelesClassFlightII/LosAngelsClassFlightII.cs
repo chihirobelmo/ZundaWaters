@@ -102,8 +102,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
     LosAngelsClassFlightII UpdateVelocityAndBuyonancy()
     {
         // ship forward and astern position in world space meter.
-        Vector3 shipForward = transform.position + transform.forward * kLengthMeter;
-        Vector3 shipAstern = transform.position - transform.forward * kLengthMeter;
+        Vector3 shipForward = transform.position + transform.forward * kLengthMeter * 0.5f;
+        Vector3 shipAstern = transform.position - transform.forward * kLengthMeter * 0.5f;
 
         // divide ships in each cell to calculate gravity and buyonancy.
         var dividedPos =
@@ -137,7 +137,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
         Vector3 shipVector = shipForward - shipAstern;
 
         // the point ship is on the surface.
-        Vector3 surfacePoint = shipVector - shipVector.y * Vector3.up;
+        Vector3 x0 = shipAstern;
+        Vector3 n = Vector3.up; // normal of surface
+        Vector3 m = (shipForward - shipAstern).normalized; // velocity;
+        float h = n.magnitude; // = (n,x) where x is surface point we want to calc.
+        Vector3 surfacePoint = x0 + ((h - Vector3.Dot(n,x0)) / Vector3.Dot(n,m)) * m;
 
         if (shipForward.y > 0 && shipAstern.y <= 0) {
             // forward fall with gravity
@@ -152,12 +156,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
             angularSpeedInAirDeg.x -= OmegaRad(gravity, (shipAstern - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
             // forward float with buyonancy
             angularSpeedInAirDeg.x -= OmegaRad(gravity - affectingBallast, (shipForward - surfacePoint).magnitude) * Mathf.Rad2Deg * dt;
-        }
-        // both under water or in air
-        else
-        {
-            // should we?
-            angularSpeedInAirDeg.x = 0.0f;
         }
 
         return this;

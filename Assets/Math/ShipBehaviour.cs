@@ -160,7 +160,7 @@ public class ShipBehaviour : MonoBehaviour
             * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
 
         Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
-        angular += VtDt(waterDrag, spec.kMassKg, buyonancyRotation, angular * Mathf.Deg2Rad) * Mathf.Rad2Deg * dt;
+        angular += buyonancyRotation * Mathf.Rad2Deg * dt;
 
         // gravity vs buyonancy result
         Vector3 g = Vector3.up * forceG / spec.kMassKg;
@@ -189,13 +189,13 @@ public class ShipBehaviour : MonoBehaviour
             rotation.eulerAngles.x < 90 ? Mathf.Clamp(rotation.eulerAngles.x, 0, 15) : 0,
             rotation.eulerAngles.y,
             Mathf.Clamp(rotation.eulerAngles.y, -15f, 15f));
-        buyonancyRotation.x = Mathf.Clamp(buyonancyRotation.x, -15f, 15f);
+        angular.x = Mathf.Clamp(angular.x, -15f, 15f);
 
         // update ship position and rotation.
         ship.position = position;
         ship.rotation = rotation;
 
-        return Tuple.Create(velocity, buyonancyRotation);
+        return Tuple.Create(velocity, angular);
     }
 
     static public Bell ChangeBell(Bell bell, int add)

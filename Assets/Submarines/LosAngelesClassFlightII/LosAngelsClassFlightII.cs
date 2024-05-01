@@ -20,6 +20,22 @@ public class LosAngelsClassFlightII : MonoBehaviour
     [SerializeField] double trueX = 0.0;
     [SerializeField] double trueZ = 0.0;
 
+    ShipBehaviour.ShipSpec spec = new ShipBehaviour.ShipSpec
+    {
+        kMassKg = kMass,
+        kThrustChangeRateNPerSec = kMass,
+        kSurfaceChangeRateDegPerSec = 30.0f,
+        kBallastChangeRateMeterPerSec2 = 0.1f,
+        kMaxBallastAirMPS2 = 10.0f,
+        kMinBallastAirMPS2 = 9.6f,
+        kLengthMeter = 110f,
+        kRadiusMeter = 5f,
+        kMaxPitchDeg = 15.0f,
+        kMaxAileronDeg = 40.0f,
+        kMaxRudderDeg = 80.0f,
+        kPropellerRadiusMeter = 2.5f
+    };
+
     const float kLengthMeter = 110.0f;
     const float kRadiusMeter = 5.0f;
     const float kWaterlineMeter = +1.0f;
@@ -315,10 +331,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
         targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
         angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
-        UpdateVelocityAndBuyonancy();
-        UpdatePosition();
-        UpdateOrientaion();
-        StabilizeRoll();
+        ShipBehaviour.UpdateVPAR(transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
+             thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
+
         Animation();
         EndFrameJob();
     }

@@ -126,7 +126,7 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        IEnumerable<int> devz = Enumerable.Range((int)(-spec.kLengthMeter / 2), (int)(+spec.kLengthMeter / 2));
+        IEnumerable<float> devz = new float[] { -spec.kLengthMeter, +spec.kLengthMeter };
         IEnumerable<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter);
 
         var dividedPos =
@@ -145,17 +145,17 @@ public class ShipBehaviour : MonoBehaviour
             .Zip(length, (pos, length) =>
             {
                 float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                float force = length.magnitude * -g;
+                float force = length.magnitude * -g * (spec.kMassKg / dividedPos.Count());
                 return force;
             })
-            .Average();
+            .Sum();
 
         // inartia of ship
-        float inartia = (1.0f / 12.0f) * 1.0f * spec.kLengthMeter * spec.kLengthMeter;
-        ship.Rotate(new Vector3((float)(force / inartia) * Mathf.Rad2Deg * dt, 0, 0));
+        float inartia = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter;
+        Vector3 buyonancyRotation = new Vector3((float)(force / inartia) * Mathf.Rad2Deg * dt, 0, 0);
 
         // gravity vs buyonancy result
-        Vector3 g = Vector3.up * force;
+        Vector3 g = Vector3.up * force / spec.kMassKg;
 
         // thrust available if only propeller under water
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();
@@ -168,7 +168,7 @@ public class ShipBehaviour : MonoBehaviour
 
         // position and rotation update
         Vector3 position = ship.position + velocity * dt;
-        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt);
+        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt + buyonancyRotation * dt);
 
         // Stabilize Roll which might be game-ish idea but needed for player.
         rotation = Quaternion.Euler(rotation.eulerAngles.x, rotation.eulerAngles.y, 0.0f);

@@ -136,14 +136,14 @@ public class ShipBehaviour : MonoBehaviour
 
         var length =
         from z in devz
-        from y in devy
         select ship.forward * z;
 
         // rotate with each point gravity and buyonancy.
         var forceRad =
-            dividedPos
-            .Zip(length, (pos, length) =>
+            devz
+            .Zip(length, (z, length) =>
             {
+                Vector3 pos = ship.position + ship.forward * z;
                 float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
                 float force = length.magnitude * -g * (spec.kMassKg / dividedPos.Count());
                 return force;
@@ -160,8 +160,9 @@ public class ShipBehaviour : MonoBehaviour
             .Sum();
 
         // inartia of ship
-        float inartia = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter;
-        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartia) * Mathf.Rad2Deg * dt, 0, 0);
+        float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
+            * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
+        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX) * Mathf.Rad2Deg * dt, 0, 0);
 
         // gravity vs buyonancy result
         Vector3 g = Vector3.up * forceG / spec.kMassKg;

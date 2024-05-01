@@ -266,8 +266,8 @@ public class LosAngelsClassFlightII : MonoBehaviour
     {
         const int thrustUp = -1;
         const int thrustDown = +1;
-        const float pitchUp = +1.0f;
-        const float pitchDown = -1.0f;
+        const float pitchUp = -1.0f;
+        const float pitchDown = +1.0f;
         const float leftYaw = -1.0f;
         const float rightYaw = +1.0f;
 
@@ -292,9 +292,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // KeyHold
         new Dictionary<KeyCode, System.Action> {
             // W: Pitch Down
-            { KeyCode.W, () => ChangeAndLimitPitchAngularSpeed(pitchDown * kSurfaceChangeRate * dt) },
+            //{ KeyCode.W, () => ChangeAndLimitPitchAngularSpeed(pitchDown * kSurfaceChangeRate * dt) },
             // S: Pitch Up
-            { KeyCode.S, () => ChangeAndLimitPitchAngularSpeed(pitchUp * kSurfaceChangeRate * dt) },
+            //{ KeyCode.S, () => ChangeAndLimitPitchAngularSpeed(pitchUp * kSurfaceChangeRate * dt) },
             // A: Yaw Left
             { KeyCode.A, () => ChangeAndLimitYawAngularSpeed(leftYaw * kSurfaceChangeRate * dt) },
             // D: Yaw Right
@@ -327,9 +327,9 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // control Thrust to target value, 
         thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, kMass, kMass) * dt;
         // PID aileron to target pitch
-        //truePitch = transform.TruePitch();
-        //targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
-        //angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
+        truePitch = transform.TruePitch();
+        targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
+        angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
         (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(
             GetComponent<Rigidbody>(),

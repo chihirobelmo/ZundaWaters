@@ -126,7 +126,7 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        IEnumerable<float> devz = new float[] { -spec.kLengthMeter, +spec.kLengthMeter };
+        IEnumerable<float> devz = new float[] { -spec.kLengthMeter * 0.25f, +spec.kLengthMeter * 0.25f };
         IEnumerable<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter);
 
         var dividedPos =

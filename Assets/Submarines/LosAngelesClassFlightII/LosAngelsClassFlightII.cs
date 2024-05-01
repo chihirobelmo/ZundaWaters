@@ -95,7 +95,10 @@ public class LosAngelsClassFlightII : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        velocityMPS = transform.forward * 5.0f/*knots*/ * KTS_TO_MPS;
+        for (int sec = 0; sec < 600; sec++)
+        {
+            velocityMPS += VtDt(airDrag, kMass, transform.forward * TargetThrustN(currentBell) / kMass, velocityMPS);
+        }
         lastPosition = transform.position;
     }
 
@@ -118,7 +121,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         Vector3 g = Vector3.up * -(gravity - affectingBallast);
 
         // thrust available if only propeller under water
-        Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN : new Vector3();
+        Vector3 thrust = IsPropellerUnderWater ? transform.forward * thrustN / kMass : new Vector3();
 
         // Velocity update
         if (transform.position.y > 0) // ship in the air
@@ -211,17 +214,17 @@ public class LosAngelsClassFlightII : MonoBehaviour
     static public float TargetThrustN(Bell bell)
     {
         if (new Dictionary<Bell, float> {
-            { Bell.FlankAhead, 8.0f },
-            { Bell.FullAhead, 6.0f },
-            { Bell.HalfAhead, 4.0f },
-            { Bell.SlowAhead, 2.0f },
-            { Bell.DeadSlowAhead, 1.0f },
+            { Bell.FlankAhead, 1.5f * kMass },
+            { Bell.FullAhead, 1.2f * kMass },
+            { Bell.HalfAhead, 0.9f * kMass },
+            { Bell.SlowAhead, 0.6f * kMass },
+            { Bell.DeadSlowAhead, 0.3f * kMass },
             { Bell.Stop, 0.0f },
-            { Bell.DeadSlowAstern, -1.0f },
-            { Bell.SlowAstern, -2.0f },
-            { Bell.HalfAstern, -3.0f },
-            { Bell.FullAstern, -4.0f },
-            { Bell.FlankAstern, -5.0f }
+            { Bell.DeadSlowAstern, -0.3f * kMass },
+            { Bell.SlowAstern, -0.6f * kMass },
+            { Bell.HalfAstern, -0.9f * kMass },
+            { Bell.FullAstern, -1.2f * kMass },
+            { Bell.FlankAstern, -1.5f * kMass }
         }.TryGetValue(bell, out float targetThrustN)) {
             return targetThrustN;
         }
@@ -306,7 +309,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
         UserControl();
 
         // control Thrust to target value, 
-        thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, 2.5f, 1.0f) * dt;
+        thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, kMass, kMass) * dt;
         // PID aileron to target pitch
         truePitch = transform.TruePitch();
         targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);

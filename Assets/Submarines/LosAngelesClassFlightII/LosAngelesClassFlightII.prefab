@@ -464,8 +464,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4518908406496110}
-  - component: {fileID: 136525012783948108}
-  - component: {fileID: 65755444854685802}
   - component: {fileID: 215554259076441332}
   - component: {fileID: 6742146486711174227}
   - component: {fileID: 115023954265341789}
@@ -492,50 +490,6 @@ Transform:
   - {fileID: 4202724740736730}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &136525012783948108
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346778154232876}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 1
-  m_Enabled: 0
-  serializedVersion: 2
-  m_Radius: 5
-  m_Height: 110
-  m_Direction: 2
-  m_Center: {x: 0, y: -2.8, z: -5.7}
---- !u!65 &65755444854685802
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346778154232876}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 1
-  m_Enabled: 0
-  serializedVersion: 3
-  m_Size: {x: 1.72, y: 6.42, z: 8.54}
-  m_Center: {x: 0, y: 4.88, z: 15.19}
 --- !u!215 &215554259076441332
 ReflectionProbe:
   m_ObjectHideFlags: 0
@@ -608,10 +562,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  knot: 0
   trueX: 0
   trueZ: 0
   currentBell: 5
+  targetThrustN: 1
   targetPitchDeg: 0
   targetAileronDeg: 0
   angleAileronDeg: 0

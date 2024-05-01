@@ -126,16 +126,36 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
+        IEnumerable<int> devz = Enumerable.Range((int)(-spec.kLengthMeter / 2), (int)(+spec.kLengthMeter / 2));
+        IEnumerable<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter);
+
         var dividedPos =
-        from z in Enumerable.Range((int)(-spec.kLengthMeter / 2), (int)(+spec.kLengthMeter / 2))
-        from y in Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter)
+        from z in devz
+        from y in devy
         select ship.position + ship.forward * z + ship.up * y;
 
-        // ballast affects power change by how percentage ship under water.
-        var affectingBallast = dividedPos.Select(pos => pos.y <= 0 ? ballastAirMPS2 : 0).Average();
+        var length =
+        from z in devz
+        from y in devy
+        select ship.forward * z;
+
+        // rotate with each point gravity and buyonancy.
+        var force =
+            dividedPos
+            .Zip(length, (pos, length) =>
+            {
+                float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                float force = length.magnitude * -g;
+                return force;
+            })
+            .Average();
+
+        // inartia of ship
+        float inartia = (1.0f / 12.0f) * 1.0f * spec.kLengthMeter * spec.kLengthMeter;
+        ship.Rotate(new Vector3((float)(force / inartia) * Mathf.Rad2Deg * dt, 0, 0));
 
         // gravity vs buyonancy result
-        Vector3 g = Vector3.up * -(gravity - affectingBallast);
+        Vector3 g = Vector3.up * force;
 
         // thrust available if only propeller under water
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();
@@ -156,61 +176,6 @@ public class ShipBehaviour : MonoBehaviour
         // update ship position and rotation.
         ship.position = position;
         ship.rotation = rotation;
-
-        //// rotate with gravity ////
-
-        //// ship forward and astern position in world space meter.
-        //                _________________________
-        // ship astern <- | gc4 | gc3 | gc2 | gc1 | -> ship forward
-        //                -------------------------
-        Vector3 gc1 = ship.position + ship.forward * spec.kLengthMeter * 0.25f; // gc of forward half of forward half
-        Vector3 gc4 = ship.position - ship.forward * spec.kLengthMeter * 0.25f; // gc of astern half of astern half
-
-        // consider each gc has ballast sphere around its position.
-        var ballastSphere =
-            from x in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
-            from y in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
-            from z in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
-            select new Vector3(x, y, z);
-
-        // each ballast gravity and buyonancy
-        var ballastGravityGC1 = ballastSphere.Select(pos => (gc1 + pos).y <= 0 ? ballastAirMPS2 : 0).Average();
-        var ballastGravityGC4 = ballastSphere.Select(pos => (gc4 + pos).y <= 0 ? ballastAirMPS2 : 0).Average();
-
-        // ship force
-        float significant = 1000f;
-        long force1 = (long)(significant * (gc1 - ship.position).magnitude * spec.kMassKg * 0.50f * -(gravity - ballastGravityGC1));
-        long force4 = (long)(significant * (gc4 - ship.position).magnitude * spec.kMassKg * 0.50f * -(gravity - ballastGravityGC4));
-
-        // merge forces
-        long entireForce = force1 + force4;
-        if (force1 != 0 && force4 != 0)
-        {
-            // interior division point of gc1 and gc4
-            float n = 1 / force1;
-            float m = 1 / force4;
-            Vector3 forcePoint = ship.position + ship.forward * force1 / (force1 + force4);
-
-            // ship rotation
-            bool isAsternHeavy = (forcePoint - (ship.position - ship.forward * spec.kLengthMeter * 0.5f)).magnitude < spec.kLengthMeter * 0.5f;
-            float omegaRad = (isAsternHeavy ? +1 : -1) * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
-
-            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
-        }
-        else if (force1 != 0)
-        {
-            Vector3 forcePoint = gc1; 
-            
-            float omegaRad = -1 * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
-            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
-        }
-        else if (force4 != 0)
-        {
-            Vector3 forcePoint = gc4;
-
-            float omegaRad = +1 * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
-            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
-        }
 
         return Tuple.Create(velocity, rotation.eulerAngles);
     }

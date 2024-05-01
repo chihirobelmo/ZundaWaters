@@ -327,12 +327,14 @@ public class LosAngelsClassFlightII : MonoBehaviour
         // control Thrust to target value, 
         thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, kMass, kMass) * dt;
         // PID aileron to target pitch
-        truePitch = transform.TruePitch();
-        targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
-        angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
+        //truePitch = transform.TruePitch();
+        //targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
+        //angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
-        (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
-             thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
+        (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(
+            GetComponent<Rigidbody>(),
+            transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
+            thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
 
         Animation();
         EndFrameJob();

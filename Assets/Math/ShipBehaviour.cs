@@ -114,9 +114,6 @@ public class ShipBehaviour : MonoBehaviour
         //targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
         //angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
 
-       UpdateVPAR(transform, Object3DPropellerAxis, Spec, velocityMPS, angularSpeedDeg,
-            thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
-
         //Animation();
         //EndFrameJob();
     }
@@ -125,7 +122,7 @@ public class ShipBehaviour : MonoBehaviour
     /// Return Vecloty in m/s, Position in meter, and Angular in degree, and Rotation i nquateonion.
     /// </summary>
     public static Tuple<Vector3, Vector3> UpdateVPAR(
-        Transform ship, Transform propeller, ShipSpec spec, Vector3 velocity, Vector3 angular, 
+        Rigidbody rb, Transform ship, Transform propeller, ShipSpec spec, Vector3 velocity, Vector3 angular, 
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
@@ -151,7 +148,7 @@ public class ShipBehaviour : MonoBehaviour
 
         // position and rotation update
         Vector3 position = ship.position + velocity * dt;
-        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * Mathf.Deg2Rad * dt);
+        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt);
 
         // Stabilize Roll which might be game-ish idea but needed for player.
         rotation = Quaternion.Euler(rotation.eulerAngles.x, rotation.eulerAngles.y, 0.0f);
@@ -162,43 +159,57 @@ public class ShipBehaviour : MonoBehaviour
 
         //// rotate with gravity ////
 
-        // ship forward and astern position in world space meter.
-        Vector3 shipForward = ship.position + ship.forward * spec.kLengthMeter * 0.5f;
-        Vector3 shipAstern = ship.position - ship.forward * spec.kLengthMeter * 0.5f;
+        //// ship forward and astern position in world space meter.
+        //                _________________________
+        // ship astern <- | gc4 | gc3 | gc2 | gc1 | -> ship forward
+        //                -------------------------
+        Vector3 gc1 = ship.position + ship.forward * spec.kLengthMeter * 0.25f; // gc of forward half of forward half
+        Vector3 gc4 = ship.position - ship.forward * spec.kLengthMeter * 0.25f; // gc of astern half of astern half
 
-        // the point ship is on the surface.
-        Vector3 x0 = shipAstern;
-        Vector3 n = Vector3.up; // normal of surface
-        Vector3 m = (shipForward - shipAstern).normalized; // velocity;
-        float h = n.magnitude; // = (n,x) where x is surface point we want to calc.
-        Vector3 surfacePoint = x0 + ((h - Vector3.Dot(n, x0)) / Vector3.Dot(n, m)) * m;
+        // consider each gc has ballast sphere around its position.
+        var ballastSphere =
+            from x in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
+            from y in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
+            from z in Enumerable.Range((int)(-spec.kRadiusMeter), (int)(+spec.kRadiusMeter))
+            select new Vector3(x, y, z);
 
-        bool frontAboveSurface = shipForward.y > 0 && shipAstern.y <= 0;
-        bool asternAboveSurface = shipForward.y <= 0 && shipAstern.y > 0;
-        bool bothUnderWaterOrInAir = !frontAboveSurface && !asternAboveSurface;
+        // each ballast gravity and buyonancy
+        var ballastGravityGC1 = ballastSphere.Select(pos => (gc1 + pos).y <= 0 ? ballastAirMPS2 : 0).Average();
+        var ballastGravityGC4 = ballastSphere.Select(pos => (gc4 + pos).y <= 0 ? ballastAirMPS2 : 0).Average();
 
-        float rotationWay = frontAboveSurface ? 1.0f : asternAboveSurface ? -1.0f : 0.0f;
+        // ship force
+        float significant = 1000f;
+        long force1 = (long)(significant * (gc1 - ship.position).magnitude * spec.kMassKg * 0.50f * -(gravity - ballastGravityGC1));
+        long force4 = (long)(significant * (gc4 - ship.position).magnitude * spec.kMassKg * 0.50f * -(gravity - ballastGravityGC4));
 
-        float fallLength =
-            frontAboveSurface ? (shipForward - surfacePoint).magnitude :
-            asternAboveSurface ? (shipAstern - surfacePoint).magnitude :
-            0;
-
-        float buyoLength =
-            frontAboveSurface ? (shipAstern - surfacePoint).magnitude :
-            asternAboveSurface ? (shipForward - surfacePoint).magnitude :
-            0;
-
-        float gravityRotate = 0;
-        if (fallLength > 0 || buyoLength > 0)
+        // merge forces
+        long entireForce = force1 + force4;
+        if (force1 != 0 && force4 != 0)
         {
-            // fall with gravity
-            gravityRotate += rotationWay * OmegaRad(gravity, fallLength);
-            // float with buyonancy
-            gravityRotate += rotationWay * OmegaRad(gravity - affectingBallast, buyoLength);
+            // interior division point of gc1 and gc4
+            float n = 1 / force1;
+            float m = 1 / force4;
+            Vector3 forcePoint = ship.position + ship.forward * force1 / (force1 + force4);
 
-            ship.RotateAround(surfacePoint, ship.right, gravityRotate * Mathf.Rad2Deg * dt);
-            //ship.rotation *= Quaternion.Euler(gravityRotate * dt);
+            // ship rotation
+            bool isAsternHeavy = (forcePoint - (ship.position - ship.forward * spec.kLengthMeter * 0.5f)).magnitude < spec.kLengthMeter * 0.5f;
+            float omegaRad = (isAsternHeavy ? +1 : -1) * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
+
+            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
+        }
+        else if (force1 != 0)
+        {
+            Vector3 forcePoint = gc1; 
+            
+            float omegaRad = -1 * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
+            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
+        }
+        else if (force4 != 0)
+        {
+            Vector3 forcePoint = gc4;
+
+            float omegaRad = +1 * (entireForce / spec.kMassKg) * (forcePoint - ship.position).magnitude / significant;
+            ship.Rotate(new Vector3(omegaRad * Mathf.Rad2Deg * dt, 0, 0));
         }
 
         return Tuple.Create(velocity, rotation.eulerAngles);

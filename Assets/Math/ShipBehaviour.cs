@@ -6,25 +6,11 @@ using System.Security.Cryptography;
 using System.Text;
 using UnityEngine;
 using static StaticMath;
+using static UnityEditor.PlayerSettings;
 
 public class ShipBehaviour : MonoBehaviour
 {
     public string hashId;
-    public struct ShipSpec
-    {
-        public float kMassKg;
-        public float kThrustChangeRateNPerSec;
-        public float kSurfaceChangeRateDegPerSec;
-        public float kBallastChangeRateMeterPerSec2;
-        public float kMaxBallastAirMPS2;
-        public float kMinBallastAirMPS2;
-        public float kLengthMeter;
-        public float kRadiusMeter;
-        public float kMaxPitchDeg;
-        public float kMaxAileronDeg;
-        public float kMaxRudderDeg;
-        public float kPropellerRadiusMeter;
-    }
 
     public double trueX = 0.0;
     public double trueZ = 0.0;
@@ -126,8 +112,11 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        IEnumerable<float> devz = new float[] { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
-        IEnumerable<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter);
+        List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 2);
+        List<float> devy = new List<float> { 0 }; // only one cell for now. otherwise ship sinks from surface.
+
+        //List<float> devz = new List<float> { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
+        //List<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter).ToList();
 
         var dividedPos =
         from z in devz
@@ -135,17 +124,44 @@ public class ShipBehaviour : MonoBehaviour
         select ship.position + ship.forward * z + ship.up * y;
 
         // rotate with each point gravity and buyonancy.
-        var forceRad =
-            devz
-            .Select(z =>
-            {
-                Vector3 pos = ship.position + ship.forward * z;
-                float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                float force = z * -g * (spec.kMassKg / devz.Count());
-                return force * ship.TruePitch().Abs().Cos();
-            })
-            .Sum();
+        bool calcBuyonancyRotation = true;
+        if (calcBuyonancyRotation) // its also broken though
+        {
+            var forceRad =
+                devz
+                .Select(z =>
+                {
+                    Vector3 pos = ship.position + ship.forward * z;
+                    float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                    float force = z * -g * (spec.kMassKg / devz.Count());
+                    return force * ship.TruePitch().Abs().Cos();
+                })
+                .Sum();
 
+            // inartia of ship
+            float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
+                * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
+
+            Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
+            angular += buyonancyRotation * Mathf.Rad2Deg * dt;
+        }
+        else // this truly mess things more than expected.
+        {
+            var forceRad =
+                devz
+                .Select(z =>
+                {
+                    rb.mass = spec.kMassKg;
+                    Vector3 pos = ship.position + ship.forward * z;
+                    float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                    float force = -g * (spec.kMassKg / devz.Count());
+                    rb.AddForceAtPosition(ship.forward * z, Vector3.up * force);
+                    return 0;
+                })
+                .Sum();
+        }
+
+        // gravity vs buyonancy
         var forceG =
             dividedPos.Select(pos =>
             {
@@ -155,22 +171,17 @@ public class ShipBehaviour : MonoBehaviour
             })
             .Sum();
 
-        // inartia of ship
-        float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
-            * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
-
-        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
-        angular += buyonancyRotation * Mathf.Rad2Deg * dt;
-
         // gravity vs buyonancy result
         Vector3 g = Vector3.up * forceG / spec.kMassKg;
 
         // thrust available if only propeller under water
         Vector3 thrust = isPropellerUnderWater ? ship.forward * thrustN : new Vector3();
 
+        Vector3 projectedArea = ship.forward * spec.kLengthMeter + ship.right * spec.kRadiusMeter * 2.0f + ship.up * spec.kRadiusMeter * 2.0f;
+
         // Velocity update
         velocity += VtDt(
-            ship.position.y > spec.kRadiusMeter ? airDrag : waterDrag, 
+            Reynolds(waterRho, velocity, spec.kLengthMeter, waterMu).magnitude, 
             spec.kMassKg, 
             g + thrust / spec.kMassKg, 
             velocity) * dt;
@@ -241,11 +252,11 @@ public class ShipBehaviour : MonoBehaviour
             } },
             // E: Ballast more air
             { KeyCode.E, () => {
-                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 + kMps2Unit, Spec.kMinBallastAirMPS2, Spec.kMaxBallastAirMPS2);
+                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 + kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
             } },
             // C: Ballast more water
             { KeyCode.C, () => {
-                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 - kMps2Unit, Spec.kMinBallastAirMPS2, Spec.kMaxBallastAirMPS2);
+                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 - kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
             } },
             // X: Reset Yaw/Pitch/Ballast
             { KeyCode.X, () => {

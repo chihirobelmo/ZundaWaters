@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -10,6 +11,98 @@ public static class StaticMath
     public const float waterDrag = 5000000f; // placeholder
     public const float airDrag = 1000000f; // placeholder
     public const float circleAreaRatioToSquare = (1.0f * 1.0f) / (0.5f * 0.5f * Mathf.PI);
+
+    //// Raynolds Number ////
+    static public Vector3 Reynolds(float rho, Vector3 v, Vector3 l, float mu) => rho * new Vector3(v.x * l.x, v.y * l.y, v.z * l.z) / mu;
+    static public Vector3 Reynolds(float rho, Vector3 v, float l, float mu) => rho * v * l / mu;
+    static public float Reynolds(float rho, float v, float l, float mu) => rho * v * l / mu;
+
+    public const float waterRho = 997f; /* kg/m^3 */
+    public const float airRho = 1.293f; /* kg/m^3 */
+
+    public const float waterMu = 0.001792f; /* Pa.s at 0C */
+    public const float airMu = 0.001724f; /* Pa.s at 0C */
+
+    // https://www2t.biglobe.ne.jp/~bono/study/memo/hydro_sheet.htm
+    public static readonly Dictionary<int, float> waterMuList = new Dictionary<int, float>{ 
+        // celcius vs Pa.s
+        {0  , 0.001792f},
+        {1  , 0.001731f},
+        {2  , 0.001673f},
+        {3  , 0.001619f},
+        {4  , 0.001567f},
+        {5  , 0.001519f},
+        {6  , 0.001473f},
+        {7  , 0.001428f},
+        {8  , 0.001386f},
+        {9  , 0.001346f},
+        {10 , 0.001308f},
+        {11 , 0.001271f},
+        {12 , 0.001236f},
+        {13 , 0.001203f},
+        {14 , 0.001171f},
+        {15 , 0.001140f},
+        {16 , 0.001111f},
+        {17 , 0.001083f},
+        {18 , 0.001056f},
+        {19 , 0.001030f},
+        {20 , 0.001005f},
+        {21 , 0.000981f},
+        {22 , 0.000958f},
+        {23 , 0.000936f},
+        {24 , 0.000914f},
+        {25 , 0.000894f},
+        {26 , 0.000874f},
+        {27 , 0.000855f},
+        {28 , 0.000836f},
+        {29 , 0.000818f},
+        {30 , 0.000801f},
+        {31 , 0.000784f},
+        {32 , 0.000768f},
+        {33 , 0.000752f},
+        {34 , 0.000737f},
+        {35 , 0.000723f},
+        {36 , 0.000709f},
+        {37 , 0.000685f},
+        {38 , 0.000681f},
+        {39 , 0.000668f},
+        {40 , 0.000656f},
+        {41 , 0.000644f},
+        {42 , 0.000632f},
+        {43 , 0.000621f},
+        {44 , 0.000610f},
+        {45 , 0.000599f},
+        {46 , 0.000588f},
+        {47 , 0.000578f},
+        {48 , 0.000568f},
+        {49 , 0.000559f},
+        {50 , 0.000549f},
+        {52 , 0.000532f},
+        {54 , 0.000515f},
+        {56 , 0.000499f},
+        {58 , 0.000483f},
+        {60 , 0.000469f},
+        {62 , 0.000455f},
+        {64 , 0.000442f},
+        {66 , 0.000429f},
+        {68 , 0.000417f},
+        {70 , 0.000406f},
+        {72 , 0.000395f},
+        {74 , 0.000385f},
+        {76 , 0.000375f},
+        {78 , 0.000366f},
+        {80 , 0.000357f},
+        {82 , 0.000348f},
+        {84 , 0.000339f},
+        {86 , 0.000331f},
+        {88 , 0.000324f},
+        {90 , 0.000317f},
+        {92 , 0.000310f},
+        {94 , 0.000303f},
+        {96 , 0.000296f},
+        {98 , 0.000290f},
+        {100, 0.000284f},
+    };
 
     public static float TruePitch(this Transform transform)
     {
@@ -23,7 +116,7 @@ public static class StaticMath
         }
         if (eulerAngles >= 90 && eulerAngles < 180)
         {
-            return - 180 + eulerAngles;
+            return -180 + eulerAngles;
         }
         if (eulerAngles >= 180 && eulerAngles < 270)
         {
@@ -34,6 +127,14 @@ public static class StaticMath
             return 360 - eulerAngles;
         }
         return 0;
+    }
+
+    static public List<float> FloatRange(float min, float max, int num)
+    {
+        return Enumerable
+            .Range(0, num)
+            .Select(x => min + x * (float)((max - min) / (num - 1)))
+            .ToList();
     }
 
     public static float Cos(this float theta) => Mathf.Cos(theta);
@@ -59,6 +160,12 @@ public static class StaticMath
     /// <param name="v"></param>
     /// <returns></returns>
     public static Vector3 VtDt(float k, float m, Vector3 a, Vector3 v) => (-k / m) * (v - m * a / k);
+    public static Vector3 VtDt(Vector3 k, float m, Vector3 a, Vector3 v) {
+        return new Vector3(
+                       (-k.x / m) * (v.x - m * a.x / k.x),
+                       (-k.y / m) * (v.y - m * a.y / k.y),
+                       (-k.z / m) * (v.z - m * a.z / k.z) );
+    }
 
     public static Vector3 VRotation(Vector3 omegaRad, float radius) => omegaRad * radius;
     public static float VRotation(float omegaRad, float radius) => omegaRad * radius;

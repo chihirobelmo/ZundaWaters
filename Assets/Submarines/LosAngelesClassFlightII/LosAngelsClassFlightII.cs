@@ -20,22 +20,6 @@ public class LosAngelsClassFlightII : MonoBehaviour
     [SerializeField] double trueX = 0.0;
     [SerializeField] double trueZ = 0.0;
 
-    ShipBehaviour.ShipSpec spec = new ShipBehaviour.ShipSpec
-    {
-        kMassKg = kMass,
-        kThrustChangeRateNPerSec = kMass,
-        kSurfaceChangeRateDegPerSec = 30.0f,
-        kBallastChangeRateMeterPerSec2 = 0.1f,
-        kMaxBallastAirMPS2 = 10.0f,
-        kMinBallastAirMPS2 = 9.6f,
-        kLengthMeter = 110f,
-        kRadiusMeter = 5f,
-        kMaxPitchDeg = 15.0f,
-        kMaxAileronDeg = 40.0f,
-        kMaxRudderDeg = 80.0f,
-        kPropellerRadiusMeter = 2.5f
-    };
-
     const float kLengthMeter = 110.0f;
     const float kRadiusMeter = 5.0f;
     const float kWaterlineMeter = +1.0f;
@@ -44,7 +28,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
     public float targetPitchDeg = 0;
     public float targetAileronDeg = 0;
 
-    PID aileronController = new PID(5.0f, 1.5f, 0);
+    PID aileronController = new PID(1.1f, 0.0f, 0);
 
     public enum Bell : int
     {
@@ -167,18 +151,19 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
     static public float TargetThrustN(Bell bell)
     {
+        const float max = 400.0f * kMass;
         if (new Dictionary<Bell, float> {
-            { Bell.FlankAhead, 5.0f * kMass },
-            { Bell.FullAhead, 4.0f * kMass },
-            { Bell.HalfAhead, 3.0f * kMass },
-            { Bell.SlowAhead, 2.0f * kMass },
-            { Bell.DeadSlowAhead, 1.0f * kMass },
+            { Bell.FlankAhead, max * 1.0f },
+            { Bell.FullAhead, max * 0.8f },
+            { Bell.HalfAhead, max * 0.6f },
+            { Bell.SlowAhead, max * 0.4f },
+            { Bell.DeadSlowAhead, max * 0.2f },
             { Bell.Stop, 0.0f },
-            { Bell.DeadSlowAstern, -1.0f * kMass },
-            { Bell.SlowAstern, -2.0f * kMass },
-            { Bell.HalfAstern, -3.0f * kMass },
-            { Bell.FullAstern, -4.0f * kMass },
-            { Bell.FlankAstern, -5.0f * kMass }
+            { Bell.DeadSlowAstern, -max * 0.2f },
+            { Bell.SlowAstern, -max * 0.4f },
+            { Bell.HalfAstern, -max * 0.6f },
+            { Bell.FullAstern, -max * 0.8f },
+            { Bell.FlankAstern, -max * 1.0f }
         }.TryGetValue(bell, out float targetThrustN)) {
             return targetThrustN;
         }
@@ -262,8 +247,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
         UserControl();
 
+
+        var shipSpec = GetComponent<ShipSpec>();
+
         // control Thrust to target value, 
-        thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, kMass, kMass) * dt;
+        thrustN += TargetValueVector(TargetThrustN(currentBell), thrustN, shipSpec.kThrustChangeRateNPerSec, shipSpec.kThrustChangeRateNPerSec) * dt;
         // PID aileron to target pitch
         truePitch = transform.TruePitch();
         targetAileronDeg = -Math.Clamp(aileronController.run(truePitch, targetPitchDeg), -40.0f, +40.0f);
@@ -271,7 +259,7 @@ public class LosAngelsClassFlightII : MonoBehaviour
 
         (velocityMPS, angularSpeedDeg) = ShipBehaviour.UpdateVPAR(
             GetComponent<Rigidbody>(),
-            transform, Object3DPropellerAxis, spec, velocityMPS, angularSpeedDeg,
+            transform, Object3DPropellerAxis, shipSpec, velocityMPS, angularSpeedDeg,
             thrustN, ballastAirMPS2, Object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
 
         Animation();

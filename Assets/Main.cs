@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,12 +24,35 @@ public class Main : MonoBehaviour {
     public static float timeScale = 1.0f;
 
     // Use this for initialization
+
+    static string GetSha256Hash(SHA256 shaHash, string input)
+    {
+        // Convert the input string to a byte array and compute the hash.
+        byte[] data = shaHash.ComputeHash(Encoding.UTF8.GetBytes(input));
+
+        // Create a new Stringbuilder to collect the bytes
+        // and create a string.
+        StringBuilder sBuilder = new StringBuilder();
+
+        // Loop through each byte of the hashed data 
+        // and format each one as a hexadecimal string.
+        for (int i = 0; i < data.Length; i++)
+        {
+            sBuilder.Append(data[i].ToString("x2"));
+        }
+
+        // Return the hexadecimal string.
+        return sBuilder.ToString();
+    }
+
     void Start ()
     {
         clientPlayer = Instantiate(player);
         clientMfdPanel1 = Instantiate(mfdpanel1);
         clientMfdPanel2 = Instantiate(mfdpanel2);
         clientMainCamera = mainCamera;
+
+        clientPlayer.GetComponent<ShipBehaviour>().IsPlayer = true;
     }
 
     void KeyDown()

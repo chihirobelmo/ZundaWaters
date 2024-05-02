@@ -6,6 +6,8 @@ using UnityEngine.SocialPlatforms;
 
 public static class StaticMath
 {
+    public const float ESP = 0.0001f; // avoid 0 divide
+
     public const float KTS_TO_MPS = 1.94384f;
     public const float gravity = 9.8f;
     public const float waterDrag = 5000000f; // placeholder
@@ -13,9 +15,9 @@ public static class StaticMath
     public const float circleAreaRatioToSquare = (1.0f * 1.0f) / (0.5f * 0.5f * Mathf.PI);
 
     //// Raynolds Number ////
-    static public Vector3 Reynolds(float rho, Vector3 v, Vector3 l, float mu) => rho * new Vector3(v.x * l.x, v.y * l.y, v.z * l.z) / mu;
-    static public Vector3 Reynolds(float rho, Vector3 v, float l, float mu) => rho * v * l / mu;
-    static public float Reynolds(float rho, float v, float l, float mu) => rho * v * l / mu;
+    static public Vector3 Reynolds(float rho, Vector3 v, Vector3 l, float mu) => rho * new Vector3(v.x * l.x, v.y * l.y, v.z * l.z) / (ESP + mu);
+    static public Vector3 Reynolds(float rho, Vector3 v, float l, float mu) => rho * v * l / (ESP + mu);
+    static public float Reynolds(float rho, float v, float l, float mu) => rho * v * l / (ESP + mu);
 
     public const float waterRho = 997f; /* kg/m^3 */
     public const float airRho = 1.293f; /* kg/m^3 */
@@ -104,11 +106,11 @@ public static class StaticMath
         {100, 0.000284f},
     };
 
-    public static float TruePitch(this Transform transform)
+    public static float TruePitchDeg(this Transform transform)
     {
-        return TruePitch(transform.eulerAngles.x);
+        return TruePitchDeg(transform.eulerAngles.x);
     }
-    public static float TruePitch(this float eulerAngles)
+    public static float TruePitchDeg(this float eulerAngles)
     {
         if (eulerAngles >= 0 && eulerAngles < 90)
         {
@@ -149,7 +151,7 @@ public static class StaticMath
     /// <param name="a"></param>
     /// <param name="v"></param>
     /// <returns></returns>
-    public static float VtDt(float k, float m, float a, float v) => (-k / m) * (v - m * a / k);
+    public static float VtDt(float k, float m, float a, float v) => (-k / m) * (v - m * a / (ESP + k));
 
     /// <summary>
     /// Calculate velocity increase per time.
@@ -159,19 +161,19 @@ public static class StaticMath
     /// <param name="a"></param>
     /// <param name="v"></param>
     /// <returns></returns>
-    public static Vector3 VtDt(float k, float m, Vector3 a, Vector3 v) => (-k / m) * (v - m * a / k);
+    public static Vector3 VtDt(float k, float m, Vector3 a, Vector3 v) => (-k / m) * (v - m * a / (ESP + k));
     public static Vector3 VtDt(Vector3 k, float m, Vector3 a, Vector3 v) {
         return new Vector3(
-                       (-k.x / m) * (v.x - m * a.x / k.x),
-                       (-k.y / m) * (v.y - m * a.y / k.y),
-                       (-k.z / m) * (v.z - m * a.z / k.z) );
+                       (-k.x / m) * (v.x - m * a.x / (ESP + k.x)),
+                       (-k.y / m) * (v.y - m * a.y / (ESP + k.y)),
+                       (-k.z / m) * (v.z - m * a.z / (ESP + k.z)) );
     }
 
     public static Vector3 VRotation(Vector3 omegaRad, float radius) => omegaRad * radius;
     public static float VRotation(float omegaRad, float radius) => omegaRad * radius;
 
-    public static Vector3 OmegaRad(Vector3 v, float radius) => v / (0.0001f + radius);
-    public static float OmegaRad(float v, float radius) => v / (0.0001f + radius);
+    public static Vector3 OmegaRad(Vector3 v, float radius) => v / (ESP + radius);
+    public static float OmegaRad(float v, float radius) => v / (ESP + radius);
 
     /// <summary>
     /// Assume submarine body as a ellipsoid. Estimate projected area to each side/top/forward axis of ship in m^2.
@@ -250,4 +252,17 @@ public static class StaticMath
     /// <param name="radt">angular(rad) change per time</param>
     /// <returns>return value does not change</returns>
     public static Vector3 Radt(this Vector3 radt) => radt;
+
+    /// <summary>
+    /// Simple feedback controller, returns delta value to reach target value.
+    /// </summary>
+    /// <param name="targetvalue">targetvalue</param>
+    /// <param name="currentValue">currentValue</param>
+    /// <param name="startSpeedDecentRange">value range before target value decrease return value</param>
+    /// <param name="magnitude">return value max magnitude</param>
+    /// <returns>delta value</returns>
+    static public float TargetValueVector(float targetvalue, float currentValue, float startSpeedDecentRange, float magnitude)
+        => magnitude
+        * (targetvalue - currentValue > 0 ? 1.0f : -1.0f)
+        * Mathf.Clamp(Mathf.Abs(targetvalue - currentValue) / startSpeedDecentRange, 0.0f, 1.0f);
 }

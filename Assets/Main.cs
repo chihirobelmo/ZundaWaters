@@ -18,8 +18,10 @@ public class Main : MonoBehaviour {
     static public GameObject clientMfdPanel1;
     static public GameObject clientMfdPanel2;
     static public Camera clientMainCamera;
+    static public List<GameObject> NPCs;
 
     static public Vector3 playerPosition;
+    static public bool dontUpdate = false;
 
     public static float timeScale = 1.0f;
 
@@ -53,6 +55,24 @@ public class Main : MonoBehaviour {
         clientMainCamera = mainCamera;
 
         clientPlayer.GetComponent<ShipBehaviour>().IsPlayer = true;
+
+        // Instansiate AI randomly
+        NPCs = Enumerable.Range(0, UnityEngine.Random.Range(3, 5))
+            .ToList()
+            .Select(x => Instantiate(player))
+            .ToList()
+            .Select(x =>
+            {
+                float range = UnityEngine.Random.Range(500, 2000);
+                float bearing = UnityEngine.Random.Range(0, 360) * Mathf.Deg2Rad;
+                x.transform.position =
+                player.transform.position + new Vector3(
+                    range * Mathf.Cos(bearing),
+                    UnityEngine.Random.Range(-300, 0),
+                    range * Mathf.Sin(bearing));
+                return x;
+            })
+            .ToList();
     }
 
     void KeyDown()
@@ -73,15 +93,38 @@ public class Main : MonoBehaviour {
 	void Update ()
     {
         KeyDown();
-        ResetFloatingPointOrigin();
     }
 
-    static public Vector3 offsetForReset;
+    private void LateUpdate()
+    {
+        NotifyFloatingPointResetTiming();
+    }
+
+    public static void NotifyFloatingPointResetTiming()
+    {
+        // floating point origin reset
+        if (clientPlayer.transform.position.x >= 256)
+        {
+            ResetFloatingPointOrigin(new Vector3(-256f * 2.0f, 0, 0));
+        }
+        if (clientPlayer.transform.position.z >= 256)
+        {
+            ResetFloatingPointOrigin(new Vector3(0, 0, -256f * 2.0f));
+        }
+        if (clientPlayer.transform.position.x <= -256)
+        {
+            ResetFloatingPointOrigin(new Vector3(+256f * 2.0f, 0, 0));
+        }
+        if (clientPlayer.transform.position.z <= -256)
+        {
+            ResetFloatingPointOrigin(new Vector3(0, 0, +256f * 2.0f));
+        }
+    }
 
     /// <summary>
     /// Reset the floating point origin
     /// </summary>
-    void ResetFloatingPointOrigin()
+    public static void ResetFloatingPointOrigin(Vector3 offsetForReset)
     {
         /*
          Q: How do games like KSP overcome the floating point precision limit
@@ -96,10 +139,15 @@ public class Main : MonoBehaviour {
          This way the player is now at the world origin again. They do this for everything.
          */
 
+        dontUpdate = true;
         // revert everything to orign
-        new List<GameObject> { clientPlayer }.ForEach(x => {
+        NPCs.ForEach(x => {
+            x.GetComponent<ShipBehaviour>().LastPosition += offsetForReset;
             x.transform.position += offsetForReset;
         });
+        clientPlayer.GetComponent<ShipBehaviour>().LastPosition += offsetForReset;
+        clientPlayer.transform.position += offsetForReset;
         offsetForReset = new Vector3(0, 0, 0);
+        dontUpdate = false;
     }
 }

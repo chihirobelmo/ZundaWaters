@@ -16,7 +16,7 @@ public class ShipBehaviour : MonoBehaviour
     [SerializeField] public double trueX = 0.0;
     [SerializeField] public double trueZ = 0.0;
     [SerializeField] public Bell currentBell = Bell.DeadSlowAhead;
-    private Vector3 lastPosition;
+    public Vector3 LastPosition { get; set; }
 
     PID aileronController = new PID(5.0f, 1.5f, 0);
     PID rudderController = new PID(5.0f, 1.5f, 0);
@@ -91,13 +91,13 @@ public class ShipBehaviour : MonoBehaviour
         {
             //velocityMPS += VtDt(waterDrag, Spec.kMassKg, transform.forward * TargetThrustN(Spec, currentBell) / Spec.kMassKg, velocityMPS);
         }
-        lastPosition = transform.position;
+        LastPosition = transform.position;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Main.offsetForReset.magnitude > 0) { return; }
+        if (Main.dontUpdate) { return; }
 
         UserControl();
         SurfaceControl();
@@ -132,51 +132,18 @@ public class ShipBehaviour : MonoBehaviour
     {
 
         // Update True XY
-        trueX += transform.position.x - lastPosition.x;
-        trueZ += transform.position.z - lastPosition.z;
+        trueX += transform.position.x - LastPosition.x;
+        trueZ += transform.position.z - LastPosition.z;
 
         // Update LastPosition
-        lastPosition = transform.position;
-
-        if (!IsPlayer) { return; }
-
-        // floating point origin reset
-        if (transform.position.x >= 256)
-        {
-            lastPosition = new Vector3(
-                transform.position.x - 256f * 2.0f,
-                transform.position.y,
-                transform.position.z);
-            Main.offsetForReset = lastPosition - transform.position;
-        }
-        if (transform.position.z >= 256)
-        {
-            lastPosition = new Vector3(
-                transform.position.x,
-                transform.position.y,
-                transform.position.z - 256f * 2.0f);
-            Main.offsetForReset = lastPosition - transform.position;
-        }
-        if (transform.position.x <= -256)
-        {
-            lastPosition = new Vector3(
-                transform.position.x + 256f * 2.0f,
-                transform.position.y,
-                transform.position.z);
-            Main.offsetForReset = lastPosition - transform.position;
-        }
-        if (transform.position.z <= -256)
-        {
-            lastPosition = new Vector3(
-                transform.position.x,
-                transform.position.y,
-                transform.position.z + 256f * 2.0f);
-            Main.offsetForReset = lastPosition - transform.position;
+        LastPosition = transform.position;
         }
     }
 
     public void UserControl()
     {
+        if (!IsPlayer) { return; }
+
         const int thrustUp = -1;
         const int thrustDown = +1;
 

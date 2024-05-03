@@ -6,25 +6,33 @@ public class MainCamera : MonoBehaviour {
 
     [SerializeField] public Material theSkyBox;
     [SerializeField] public Material theWaterBox;
-    [SerializeField] public Light theSunLight;
+    [SerializeField] public GameObject theSunLight;
+    private GameObject theSunLightComponent;
     private float CameraDistanceFromPlayer_meter = 200;
     private Vector3 CameraPosFromPlayer = new Vector3(45,45,45);
+    public GameObject Target { get; set; }
 
     // Use this for initialization
     void Start () {
-		
-	}
+        theSunLightComponent = Instantiate(theSunLight);
+        Target = Main.clientPlayer;
+
+    }
 	
 	// Update is called once per frame
 	void Update ()
     {
-        transform.position = Main.clientPlayer.transform.position
+        if (Input.GetKeyUp(KeyCode.F3)) {
+            Target = Main.clientPlayer;
+        }
+
+        transform.position = Target.transform.position
             + new Vector3(
             Mathf.Cos(Mathf.Deg2Rad * CameraPosFromPlayer.x),
             Mathf.Sin(Mathf.Deg2Rad * CameraPosFromPlayer.y),
             Mathf.Sin(Mathf.Deg2Rad * CameraPosFromPlayer.x)).normalized
             * CameraDistanceFromPlayer_meter;
-        transform.LookAt(Main.clientPlayer.transform.position);
+        transform.LookAt(Target.transform.position);
 
         if (Input.GetKey(KeyCode.Mouse1))
         {
@@ -36,8 +44,8 @@ public class MainCamera : MonoBehaviour {
         CameraDistanceFromPlayer_meter += Input.mouseScrollDelta.y * (CameraDistanceFromPlayer_meter / 20.0f);
         CameraDistanceFromPlayer_meter = CameraDistanceFromPlayer_meter < 65 ? 65 : CameraDistanceFromPlayer_meter > 500 ? 500 : CameraDistanceFromPlayer_meter;
 
-        theSunLight.GetComponent<Light>().intensity = LinearSaturate(1 + transform.position.y / 300, 0, 300);
-        theSunLight.GetComponent<Light>().color = new Color(
+        theSunLightComponent.GetComponent<Light>().intensity = LinearSaturate(1 + transform.position.y / 300, 0, 300);
+        theSunLightComponent.GetComponent<Light>().color = new Color(
             /*R*/ LinearSaturate(1 + transform.position.y / 1, 0, 1),
             /*G*/ LinearSaturate(1 + transform.position.y / 100, 0, 1),
             /*B*/ LinearSaturate(1 + transform.position.y / 300, 1, 1)

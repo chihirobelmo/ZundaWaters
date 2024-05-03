@@ -504,6 +504,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9e25d0a4a5a40147b09550bf31c88b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mk48: {fileID: 3869201080379810953, guid: 786cc92027d22774b98506b5b638be04, type: 3}
 --- !u!114 &-9149403699341427169
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,8 +531,10 @@ MonoBehaviour:
   thrustN: 22.8
   velocityMPS: {x: 0, y: 0, z: 9.55}
   angularSpeedDeg: {x: 0, y: 0, z: 0}
-  object3DPropellerBlades: {fileID: 0}
-  object3DPropellerAxis: {fileID: 0}
+  object3DPropellerBlades: {fileID: 400000, guid: 709ec7359fd32954096ea4cb2d305929,
+    type: 3}
+  object3DPropellerAxis: {fileID: 400018, guid: 709ec7359fd32954096ea4cb2d305929,
+    type: 3}
 --- !u!114 &4130824906732115602
 MonoBehaviour:
   m_ObjectHideFlags: 0

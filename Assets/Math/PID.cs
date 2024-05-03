@@ -51,8 +51,8 @@ public class PID
 
         // PID制御の式より、制御入力uを計算
         long e = r - y;                // 誤差を計算
-        ie += (e + e_pre) * t / 2;     // 誤差の積分を近似計算
-        long de = (e - e_pre) / t;     // 誤差の微分を近似計算
+        ie += (e + e_pre) * (/*ESP*/1 + t) / 2;     // 誤差の積分を近似計算
+        long de = (e - e_pre) / (/*ESP*/1 + t);     // 誤差の微分を近似計算
         float u = KP * e + KI * ie + KD * de; // PID制御の式にそれぞれを代入
 
         // 次のために現時刻の情報を記録

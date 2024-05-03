@@ -52,7 +52,7 @@ public class MFD : MonoBehaviour
     {
         // camera positions
         clientMfdCamera.transform.position = mfdcampos;
-        transform.position = clientMfdCamera.transform.position + Main.clientMainCamera.transform.forward * 1.0f;
+        transform.position = clientMfdCamera.transform.position + Main.MainCamera.transform.forward * 1.0f;
         clientMfdCamera.transform.LookAt(transform.position);
         transform.LookAt(clientMfdCamera.transform.position);
         transform.rotation *= Quaternion.Euler(90, 0, 0);

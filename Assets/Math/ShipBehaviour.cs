@@ -104,9 +104,10 @@ public class ShipBehaviour : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        UserControl();
+
         if (Main.dontUpdate) { return; }
 
-        UserControl();
         SurfaceControl();
 
         (velocityMPS, angularSpeedDeg) = UpdateVPAR(
@@ -239,7 +240,7 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 6);
+        List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 3);
         List<float> devy = FloatRange(-spec.kRadiusMeter * 0.33f, +spec.kRadiusMeter * 0.33f, 3);
 
         //List<float> devz = new List<float> { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
@@ -258,7 +259,7 @@ public class ShipBehaviour : MonoBehaviour
                 // position
                 Vector3 pos = ship.position + ship.forward * r;
                 float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                // force made by gravity and buyonancy
+                // omega force made by gravity and buyonancy
                 float forceToDown = r * g * (spec.kMassKg / devz.Count());
                 float forceRad = forceToDown * ship.TruePitchDeg().Abs().Cos();
                 // need to reduce angular force by drag

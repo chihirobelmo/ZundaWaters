@@ -45,7 +45,7 @@ Camera:
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
-  m_projectionMatrixMode: 1
+  m_projectionMatrixMode: 2
   m_GateFitMode: 2
   m_FOVAxisMode: 0
   m_Iso: 200
@@ -67,7 +67,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 100000
-  field of view: 60
+  field of view: 26.991467
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -107,4 +107,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   theSkyBox: {fileID: 2100000, guid: f07bf21780b796444862d6aa846d2892, type: 2}
   theWaterBox: {fileID: 2100000, guid: f07bf21780b796444862d6aa846d2892, type: 2}
-  theSunLight: {fileID: 0}
+  theSunLight: {fileID: 3413612852762652937, guid: fb0eb823fd00cae4f90da3648a14dd35,
+    type: 3}

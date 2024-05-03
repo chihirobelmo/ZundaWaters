@@ -1,7 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public class LosAngelsClassFlightII : MonoBehaviour
 {
+    [SerializeField] public GameObject mk48;
     Transform Object3DPropellerBlades => transform.GetChild(0).GetChild(0);
     Transform Object3DPropellerAxis => transform.GetChild(0).GetChild(8);
 
@@ -15,5 +18,16 @@ public class LosAngelsClassFlightII : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!GetComponent<ShipBehaviour>().IsPlayer)
+            return;
+
+        if (Input.GetKeyUp(KeyCode.F))
+        {
+            Main.torpedos.Add(
+                Instantiate(mk48, transform.position + transform.forward * GetComponent<ShipSpec>().kLengthMeter * 0.5f, transform.rotation)
+                );
+            Main.torpedos.Last().GetComponent<Mk48Test>().Fire(/*GameObject.Find("Target")*/Main.NPCs.Last(), gameObject);
+            Main.MainCamera.GetComponent<MainCamera>().Target = Main.torpedos.Last();
+        }
     }
 }

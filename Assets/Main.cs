@@ -17,8 +17,9 @@ public class Main : MonoBehaviour {
     static public GameObject clientPlayer;
     static public GameObject clientMfdPanel1;
     static public GameObject clientMfdPanel2;
-    static public Camera clientMainCamera;
+    static public Camera MainCamera { get; set; }
     static public List<GameObject> NPCs;
+    static public List<GameObject> torpedos = new List<GameObject>();
 
     static public Vector3 playerPosition;
     static public bool dontUpdate = false;
@@ -52,23 +53,23 @@ public class Main : MonoBehaviour {
         clientPlayer = Instantiate(player);
         clientMfdPanel1 = Instantiate(mfdpanel1);
         clientMfdPanel2 = Instantiate(mfdpanel2);
-        clientMainCamera = mainCamera;
+        MainCamera = Instantiate(mainCamera);
 
         clientPlayer.GetComponent<ShipBehaviour>().IsPlayer = true;
 
         // Instansiate AI randomly
-        NPCs = Enumerable.Range(0, UnityEngine.Random.Range(3, 5))
+        NPCs = Enumerable.Range(0, UnityEngine.Random.Range(1, 2))
             .ToList()
             .Select(x => Instantiate(player))
             .ToList()
             .Select(x =>
             {
-                float range = UnityEngine.Random.Range(500, 2000);
-                float bearing = UnityEngine.Random.Range(0, 360) * Mathf.Deg2Rad;
+                float range = UnityEngine.Random.Range(800, 1200);
+                float bearing = UnityEngine.Random.Range(270, 90) * Mathf.Deg2Rad;
                 x.transform.position =
                 player.transform.position + new Vector3(
                     range * Mathf.Cos(bearing),
-                    UnityEngine.Random.Range(-300, 0),
+                    UnityEngine.Random.Range(-25, 0),
                     range * Mathf.Sin(bearing));
                 return x;
             })
@@ -143,6 +144,10 @@ public class Main : MonoBehaviour {
         // revert everything to orign
         NPCs.ForEach(x => {
             x.GetComponent<ShipBehaviour>().LastPosition += offsetForReset;
+            x.transform.position += offsetForReset;
+        });
+        torpedos.ForEach(x => {
+            x.GetComponent<Mk48Test>().OwnLastPosition += offsetForReset;
             x.transform.position += offsetForReset;
         });
         clientPlayer.GetComponent<ShipBehaviour>().LastPosition += offsetForReset;

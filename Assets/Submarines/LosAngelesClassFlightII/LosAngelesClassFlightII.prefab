@@ -544,8 +544,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 894cd2f59406c1049ab6c00eb615a2a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  kMassKg: 140000000
-  kThrustChangeRateNPerSec: 140000000
+  kMassKg: 14000000
+  kThrustChangeRateNPerSec: 14000000
   kSurfaceChangeRateDegPerSec: 30
   kBallastChangeRateMeterPerSec2: 0.2
   kMaxBallastAirMeterPerSec2: 10.2

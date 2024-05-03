@@ -239,8 +239,8 @@ public class ShipBehaviour : MonoBehaviour
         float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
-        List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 2);
-        List<float> devy = new List<float> { 0 }; // only one cell for now. otherwise ship sinks from surface.
+        List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 6);
+        List<float> devy = FloatRange(-spec.kRadiusMeter * 0.33f, +spec.kRadiusMeter * 0.33f, 3);
 
         //List<float> devz = new List<float> { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
         //List<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter).ToList();
@@ -253,12 +253,21 @@ public class ShipBehaviour : MonoBehaviour
         // rotate with each point gravity and buyonancy.
         var forceRad =
             devz
-            .Select(z =>
+            .Select(r =>
             {
-                Vector3 pos = ship.position + ship.forward * z;
+                // position
+                Vector3 pos = ship.position + ship.forward * r;
                 float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                float force = z * -g * (spec.kMassKg / devz.Count());
-                return force * ship.TruePitchDeg().Abs().Cos();
+                // force made by gravity and buyonancy
+                float forceToDown = r * g * (spec.kMassKg / devz.Count());
+                float forceRad = forceToDown * ship.TruePitchDeg().Abs().Cos();
+                // need to reduce angular force by drag
+                // reference: https://www.ric.or.jp/gyoumu/data/ric_paper/201509_2-012.pdf
+                float angularV = (angular.x * Mathf.Deg2Rad * r);
+                float A = spec.kLengthMeter * spec.kRadiusMeter * 2.0f; // not sure if its correct ?
+                float antiForceRad = (pos.y <= 0 ? waterRho : airRho) * A * /*CD*/1.0f * angularV * angularV * r / 2.0f;
+                // result for the point
+                return forceRad - antiForceRad;
             })
             .Sum();
 
@@ -286,10 +295,11 @@ public class ShipBehaviour : MonoBehaviour
         Vector3 dVThrust = (isPropellerUnderWater ? ship.forward * thrustN : new Vector3()) / spec.kMassKg;
 
         // Reynolds number
-        var reynolds = Reynolds(ship.position.y < 0 ? waterRho : airRho, velocity.magnitude, spec.kLengthMeter, ship.position.y < 0 ? waterMu : airMu);
+        var reynoldsWater = Reynolds(waterRho, velocity.magnitude, spec.kLengthMeter, waterMu);
+        var reynoldsAir = Reynolds(airRho, velocity.magnitude, spec.kLengthMeter, airMu);
 
         // Velocity update
-        velocity += VtDt(reynolds, spec.kMassKg, dVg + dVThrust, velocity) * dt;
+        velocity += VtDt(reynoldsWater, spec.kMassKg, dVg + dVThrust, velocity) * dt;
 
         // forward speed and drag power
         float forwardSpeed = velocity.magnitude * Vector3.Dot(velocity, ship.forward);
@@ -312,10 +322,6 @@ public class ShipBehaviour : MonoBehaviour
             rotation.eulerAngles.x <= 90 ? Mathf.Clamp(rotation.eulerAngles.x, 0, 45) : 0,
             rotation.eulerAngles.y,
             0.0f);
-        angular.x = Mathf.Clamp(angular.x, -15f, 15f);
-
-        // need to stop angular by drag
-        angular.x = VtDt(reynolds, spec.kMassKg, 0, angular.x * spec.kLengthMeter * 0.5f) * dt / (spec.kLengthMeter * 0.5f);
 
         // update ship position and rotation.
         ship.position = position;

@@ -144,9 +144,13 @@ public static class StaticMath
             .ToList();
     }
 
-    public static float Cos(this float theta) => Mathf.Cos(theta);
-    public static float Sin(this float theta) => Mathf.Sin(theta);
-    public static float Abs(this float theta) => Mathf.Abs(theta);
+    public static float Cos(this float theta) => Mathf.Cos(theta * Mathf.Deg2Rad);
+    public static float Sin(this float theta) => Mathf.Sin(theta * Mathf.Deg2Rad);
+    public static float Abs(this float theta) => Mathf.Abs(theta * Mathf.Deg2Rad);
+
+    //public static float DuDt(float rhoS/*Kg/m^3*/, float rhoF, float V/*m^3*/, float S, )
+
+    //// Below VtDt may not work well. ////
 
     /// <summary>
     /// Calculate velocity increase per time.

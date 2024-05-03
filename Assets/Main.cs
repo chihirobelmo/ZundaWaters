@@ -65,7 +65,7 @@ public class Main : MonoBehaviour {
             .Select(x =>
             {
                 float range = UnityEngine.Random.Range(800, 1200);
-                float bearing = UnityEngine.Random.Range(270, 90) * Mathf.Deg2Rad;
+                float bearing = UnityEngine.Random.Range(85, 95) * Mathf.Deg2Rad;
                 x.transform.position =
                 player.transform.position + new Vector3(
                     range * Mathf.Cos(bearing),

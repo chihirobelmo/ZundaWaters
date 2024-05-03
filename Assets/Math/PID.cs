@@ -10,8 +10,8 @@ public class PID
 {
     // 定数設定 ===============
     float KP = 0.001f;  // Pゲイン
-    float KD = 0;   // Dゲイン
     float KI = 0;   // Iゲイン
+    float KD = 0;   // Dゲイン
 
     // 変数初期化 ===============
     long e_pre = 0; // 微分の近似計算のための初期値
@@ -26,17 +26,23 @@ public class PID
     public PID() { }
 
     /// <summary>
-    /// KP,KD,KI = 0.0001 order in long
+    /// KP,KI,KD
     /// </summary>
-    public PID(float kp, float kd, float ki) {
+    public PID(float kp, float ki, float kd) {
         KP = kp;
-        KD = kd;
         KI = ki;
+        KD = kd;
+    }
+    public void SetPID(float kp, float ki, float kd)
+    {
+        KP = kp;
+        KI = ki;
+        KD = kd;
     }
 
     const int significant = 1000;
 
-    public float run(float current, float target)
+    public float run(float current, float target, float dt)
     {
         // 現時刻における情報を取得
         long y = (long)(current * 1000); // 出力を取得。例:センサー情報を読み取る処理
@@ -45,8 +51,8 @@ public class PID
 
         // PID制御の式より、制御入力uを計算
         long e = r - y;                // 誤差を計算
-        long de = (e - e_pre) / t;        // 誤差の微分を近似計算
-        ie += (e + e_pre) * t / 2; // 誤差の積分を近似計算
+        ie += (e + e_pre) * t / 2;     // 誤差の積分を近似計算
+        long de = (e - e_pre) / t;     // 誤差の微分を近似計算
         float u = KP * e + KI * ie + KD * de; // PID制御の式にそれぞれを代入
 
         // 次のために現時刻の情報を記録

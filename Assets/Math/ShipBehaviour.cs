@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using static StaticMath;
 using static UnityEditor.PlayerSettings;
@@ -18,13 +19,16 @@ public class ShipBehaviour : MonoBehaviour
     [SerializeField] public Bell currentBell = Bell.DeadSlowAhead;
     public Vector3 LastPosition { get; set; }
 
-    PID aileronController = new PID(5.0f, 1.5f, 0);
-    PID rudderController = new PID(5.0f, 1.5f, 0);
+    PID thrustController = new PID(0.1f, 0.0f, 0);
+    PID pitchController = new PID(0.1f, 0.0f, 0);
+    PID aileronController = new PID(0.1f, 0.0f, 0);
+    PID rudderController = new PID(0.1f, 0.0f, 0);
 
     /// <summary>
     /// target Pitch Degree controled by PID
     /// </summary>
     [SerializeField] public float targetPitchDeg = 0;
+    [SerializeField] public float truePitch;
     /// <summary>
     /// target Aileron Degree controled by PID
     /// </summary>
@@ -92,6 +96,9 @@ public class ShipBehaviour : MonoBehaviour
             //velocityMPS += VtDt(waterDrag, Spec.kMassKg, transform.forward * TargetThrustN(Spec, currentBell) / Spec.kMassKg, velocityMPS);
         }
         LastPosition = transform.position;
+
+        pitchController = new PID(Spec.kPitchPID.x, Spec.kPitchPID.y, Spec.kPitchPID.z);
+        aileronController = new PID(Spec.kAileronPID.x, Spec.kAileronPID.y, Spec.kAileronPID.z);
     }
 
     // Update is called once per frame
@@ -109,14 +116,25 @@ public class ShipBehaviour : MonoBehaviour
 
         AnimateModel();
         EndFrameJob();
+
+        pitchController.SetPID(Spec.kPitchPID.x, Spec.kPitchPID.y, Spec.kPitchPID.z);
+        aileronController.SetPID(Spec.kAileronPID.x, Spec.kAileronPID.y, Spec.kAileronPID.z);
     }
 
     public void SurfaceControl() {
+
         // control Thrust to target value, 
-        thrustN += TargetValueVector(TargetThrustN(Spec, currentBell), thrustN, Spec.kThrustChangeRateNPerSec, Spec.kThrustChangeRateNPerSec) * dt;
+        thrustN += thrustController.run(thrustN, TargetThrustN(Spec, currentBell), dt) * dt;
+
         // PID aileron to target pitch
-        targetAileronDeg = -Math.Clamp(aileronController.run(transform.TruePitchDeg(), targetPitchDeg), -40.0f, +40.0f);
-        angleAileronDeg += TargetValueVector(targetAileronDeg, angleAileronDeg, 5.0f, 10.0f) * dt;
+        truePitch = transform.eulerAngles.x.TruePitchDeg();
+        // caution, PID does not works for inverse proportion. if minus aileron pitch up, then multiply minus one.
+        targetAileronDeg = -pitchController.run(truePitch, targetPitchDeg, dt);
+        angleAileronDeg += Math.Clamp(aileronController.run(angleAileronDeg, targetAileronDeg, dt) * dt, -Spec.kSurfaceChangeRateDegPerSec * dt, +Spec.kSurfaceChangeRateDegPerSec * dt);
+        angleAileronDeg = Mathf.Clamp(angleAileronDeg, -Spec.kMaxAileronDeg, Spec.kMaxAileronDeg);
+
+        angleRudderDeg += TargetValueVector(targetRudderDeg, angleRudderDeg, 5.0f, 10.0f) * dt;
+        angleRudderDeg = Mathf.Clamp(angleRudderDeg, -Spec.kMaxRudderDeg, Spec.kMaxRudderDeg);
     }
 
     public void AnimateModel()
@@ -137,7 +155,6 @@ public class ShipBehaviour : MonoBehaviour
 
         // Update LastPosition
         LastPosition = transform.position;
-        }
     }
 
     public void UserControl()
@@ -159,22 +176,18 @@ public class ShipBehaviour : MonoBehaviour
             // W: Pitch Down
             { KeyCode.W, () => {
                 targetPitchDeg = Mathf.Clamp(targetPitchDeg - kDegUnit, -Spec.kMaxPitchDeg, Spec.kMaxPitchDeg);
-                aileronController.reset();
             } },
             // S: Pitch Up
             { KeyCode.S, () => {
                 targetPitchDeg = Mathf.Clamp(targetPitchDeg + kDegUnit, -Spec.kMaxPitchDeg, Spec.kMaxPitchDeg);
-                aileronController.reset();
             } },
             // A: Yaw Left
             { KeyCode.A, () => {
                 targetRudderDeg = Mathf.Clamp(targetRudderDeg - kDegUnit, -Spec.kMaxRudderDeg, Spec.kMaxRudderDeg);
-                rudderController.reset();
             } },
             // D: Yaw Right
             { KeyCode.D, () => {
                 targetRudderDeg = Mathf.Clamp(targetRudderDeg + kDegUnit, -Spec.kMaxRudderDeg, Spec.kMaxRudderDeg);
-                rudderController.reset();
             } },
             // E: Ballast more air
             { KeyCode.E, () => {
@@ -198,7 +211,7 @@ public class ShipBehaviour : MonoBehaviour
 
     static public float TargetThrustN(ShipSpec spec, Bell bell)
     {
-        float max = 400.0f * spec.kMassKg;
+        float max = spec.kMaxThrustPowerMass * spec.kMassKg;
         if (new Dictionary<Bell, float> {
             { Bell.FlankAhead, max * 1.0f },
             { Bell.FullAhead, max * 0.8f },
@@ -238,42 +251,23 @@ public class ShipBehaviour : MonoBehaviour
         select ship.position + ship.forward * z + ship.up * y;
 
         // rotate with each point gravity and buyonancy.
-        bool calcBuyonancyRotation = true;
-        if (calcBuyonancyRotation) // its also broken though
-        {
-            var forceRad =
-                devz
-                .Select(z =>
-                {
-                    Vector3 pos = ship.position + ship.forward * z;
-                    float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                    float force = z * -g * (spec.kMassKg / devz.Count());
-                    return force * ship.TruePitchDeg().Abs().Cos();
-                })
-                .Sum();
+        var forceRad =
+            devz
+            .Select(z =>
+            {
+                Vector3 pos = ship.position + ship.forward * z;
+                float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                float force = z * -g * (spec.kMassKg / devz.Count());
+                return force * ship.TruePitchDeg().Abs().Cos();
+            })
+            .Sum();
 
-            // inartia of ship
-            float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
-                * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
+        // inartia of ship
+        float inartiaX = (1.0f / 12.0f) * spec.kMassKg * spec.kLengthMeter * spec.kLengthMeter
+            * (1 + 3 * (spec.kRadiusMeter / spec.kLengthMeter) * (spec.kRadiusMeter / spec.kLengthMeter));
 
-            Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
-            angular += buyonancyRotation * Mathf.Rad2Deg * dt;
-        }
-        else // this truly mess things more than expected.
-        {
-            var forceRad =
-                devz
-                .Select(z =>
-                {
-                    rb.mass = spec.kMassKg;
-                    Vector3 pos = ship.position + ship.forward * z;
-                    float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
-                    float force = -g * (spec.kMassKg / devz.Count());
-                    rb.AddForceAtPosition(ship.forward * z, Vector3.up * force);
-                    return 0;
-                })
-                .Sum();
-        }
+        Vector3 buyonancyRotation = new Vector3((float)(forceRad / inartiaX), 0, 0);
+        angular += buyonancyRotation * Mathf.Rad2Deg * dt;
 
         // gravity vs buyonancy
         var forceG =
@@ -291,27 +285,37 @@ public class ShipBehaviour : MonoBehaviour
         // thrust available if only propeller under water
         Vector3 dVThrust = (isPropellerUnderWater ? ship.forward * thrustN : new Vector3()) / spec.kMassKg;
 
+        // Reynolds number
+        var reynolds = Reynolds(ship.position.y < 0 ? waterRho : airRho, velocity.magnitude, spec.kLengthMeter, ship.position.y < 0 ? waterMu : airMu);
+
         // Velocity update
-        var rho = waterRho;
-        var mu = waterMu;
-        var reynolds = Reynolds(rho, velocity.magnitude, spec.kLengthMeter, mu);
         velocity += VtDt(reynolds, spec.kMassKg, dVg + dVThrust, velocity) * dt;
 
+        // forward speed and drag power
+        float forwardSpeed = velocity.magnitude * Vector3.Dot(velocity, ship.forward);
+        float Drag = /*CD*/1.0f * spec.kRadiusMeter * spec.kRadiusMeter * Mathf.PI * waterRho * forwardSpeed * forwardSpeed * 0.5f;
+
         // yaw and pitch
-        Vector3 surfacePowerDeg = new Vector3(angleAileronDeg, angleRudderDeg, 0.0f);
+        float magicMult = 0.1f;
+        Vector3 surfacePowerRad = new Vector3(
+            magicMult * Mathf.Sin(angleAileronDeg * Mathf.Deg2Rad) * forwardSpeed,
+            magicMult * Mathf.Sin(angleRudderDeg * Mathf.Deg2Rad) * forwardSpeed, 0.0f);
 
         // position and rotation update
         Vector3 position = ship.position + velocity * dt;
-        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerDeg * dt + angular * dt);
+        Quaternion rotation = ship.rotation * Quaternion.Euler(surfacePowerRad * dt + angular * dt);
 
         // Limit physics don't go crazy
         // Eventually this is not a phycsics simulatin aimed.
         rotation = Quaternion.Euler(
-            rotation.eulerAngles.x > 270 ? Mathf.Clamp(rotation.eulerAngles.x, 345, 360) :
-            rotation.eulerAngles.x < 90 ? Mathf.Clamp(rotation.eulerAngles.x, 0, 15) : 0,
+            rotation.eulerAngles.x >= 270 ? Mathf.Clamp(rotation.eulerAngles.x, 315, 360) :
+            rotation.eulerAngles.x <= 90 ? Mathf.Clamp(rotation.eulerAngles.x, 0, 45) : 0,
             rotation.eulerAngles.y,
-            Mathf.Clamp(rotation.eulerAngles.y, -15f, 15f));
+            0.0f);
         angular.x = Mathf.Clamp(angular.x, -15f, 15f);
+
+        // need to stop angular by drag
+        angular.x = VtDt(reynolds, spec.kMassKg, 0, angular.x * spec.kLengthMeter * 0.5f) * dt / (spec.kLengthMeter * 0.5f);
 
         // update ship position and rotation.
         ship.position = position;

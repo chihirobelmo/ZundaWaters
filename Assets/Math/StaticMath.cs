@@ -131,6 +131,11 @@ public static class StaticMath
         return 0;
     }
 
+    public static float TrueHeadingDeg(this float eulerAngles)
+    {
+        return eulerAngles < 0 ? eulerAngles + 360 : eulerAngles >= 360 ? eulerAngles - 360 : eulerAngles;
+    }
+
     static public List<float> FloatRange(float min, float max, int num)
     {
         return Enumerable

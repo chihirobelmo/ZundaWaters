@@ -13,9 +13,12 @@ public class ShipSpec : MonoBehaviour
     [SerializeField] public float kMinBallastAirMeterPerSec2;
     [SerializeField] public float kLengthMeter;
     [SerializeField] public float kRadiusMeter;
+    [SerializeField] public float kMaxThrustPowerMass;
     [SerializeField] public float kMaxPitchDeg;
     [SerializeField] public float kMaxAileronDeg;
     [SerializeField] public float kMaxRudderDeg;
+    [SerializeField] public Vector3 kPitchPID;
+    [SerializeField] public Vector3 kAileronPID;
 
     // for animation
     [SerializeField] public float kPropellerRadiusMeter;

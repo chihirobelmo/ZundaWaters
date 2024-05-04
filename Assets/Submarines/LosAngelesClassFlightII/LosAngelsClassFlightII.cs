@@ -26,8 +26,11 @@ public class LosAngelsClassFlightII : MonoBehaviour
             Main.torpedos.Add(
                 Instantiate(mk48, transform.position + transform.forward * GetComponent<ShipSpec>().kLengthMeter * 0.5f, transform.rotation)
                 );
-            Main.torpedos.Last().GetComponent<Mk48Test>().Fire(/*GameObject.Find("Target")*/Main.NPCs.Last(), gameObject);
-            Main.MainCamera.GetComponent<MainCamera>().Target = Main.torpedos.Last();
+            if (Main.torpedos.Last().TryGetComponent(out TorpedoBehaviour tb)) { 
+                tb.HandOff(Main.NPCs.Last(), Main.clientPlayer)
+                  .Invoke(transform.position + transform.forward * GetComponent<ShipSpec>().kLengthMeter * 0.5f);
+                Main.MainCamera.GetComponent<MainCamera>().Target = Main.torpedos.Last();
+            }
         }
     }
 }

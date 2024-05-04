@@ -108,18 +108,23 @@ public class ShipBehaviour : MonoBehaviour
 
         if (Main.dontUpdate) { return; }
 
+        FloodingByDamage();
         SurfaceControl();
 
-        (velocityMPS, angularSpeedDeg) = UpdateVPAR(
-            GetComponent<Rigidbody>(),
+        (velocityMPS, transform.position, angularSpeedDeg, transform.rotation) = UpdateVPAR(
             transform, object3DPropellerAxis, Spec, velocityMPS, angularSpeedDeg,
-            thrustN, ballastAirMPS2, object3DPropellerAxis.position.y < 0, angleAileronDeg, angleRudderDeg);
+            thrustN, ballastAirMPS2, angleAileronDeg, angleRudderDeg);
 
         AnimateModel();
         EndFrameJob();
 
         pitchController.SetPID(Spec.kPitchPID.x, Spec.kPitchPID.y, Spec.kPitchPID.z);
         aileronController.SetPID(Spec.kAileronPID.x, Spec.kAileronPID.y, Spec.kAileronPID.z);
+    }
+
+    void FloodingByDamage()
+    {
+        ballastAirMPS2 = Mathf.Clamp(ballastAirMPS2 - floodingRateByDamage * dt, 0.0f, float.MaxValue);
     }
 
     public void SurfaceControl() {
@@ -210,6 +215,13 @@ public class ShipBehaviour : MonoBehaviour
         .Sum();
     }
 
+    private float floodingRateByDamage = 0;
+
+    public void Damage()
+    {
+        floodingRateByDamage += 0.5f;
+    }
+
     static public float TargetThrustN(ShipSpec spec, Bell bell)
     {
         float max = spec.kMaxThrustPowerMass * spec.kMassKg;
@@ -235,9 +247,9 @@ public class ShipBehaviour : MonoBehaviour
     /// <summary>
     /// Return Vecloty in m/s, Position in meter, and Angular in degree, and Rotation i nquateonion.
     /// </summary>
-    public static Tuple<Vector3, Vector3> UpdateVPAR(
-        Rigidbody rb, Transform ship, Transform propeller, ShipSpec spec, Vector3 velocity, Vector3 angular, 
-        float thrustN, float ballastAirMPS2, bool isPropellerUnderWater, float angleAileronDeg, float angleRudderDeg)
+    public static Tuple<Vector3, Vector3, Vector3, Quaternion> UpdateVPAR(
+        Transform ship, Transform propeller, ShipSpec spec, Vector3 velocity, Vector3 angular, 
+        float thrustN, float ballastAirMPS2, float angleAileronDeg, float angleRudderDeg)
     {
         // divide ships in each cell to calculate gravity and buyonancy.
         List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 3);
@@ -293,7 +305,7 @@ public class ShipBehaviour : MonoBehaviour
         Vector3 dVg = Vector3.up * forceG / spec.kMassKg;
 
         // thrust available if only propeller under water
-        Vector3 dVThrust = (isPropellerUnderWater ? ship.forward * thrustN : new Vector3()) / spec.kMassKg;
+        Vector3 dVThrust = (/*under water*/propeller.position.y < 0 ? ship.forward * thrustN : new Vector3()) / spec.kMassKg;
 
         // Reynolds number
         var reynoldsWater = Reynolds(waterRho, velocity.magnitude, spec.kLengthMeter, waterMu);
@@ -324,11 +336,7 @@ public class ShipBehaviour : MonoBehaviour
             rotation.eulerAngles.y,
             0.0f);
 
-        // update ship position and rotation.
-        ship.position = position;
-        ship.rotation = rotation;
-
-        return Tuple.Create(velocity, angular);
+        return Tuple.Create(velocity, position, angular, rotation);
     }
 
     static public Bell ChangeBell(Bell bell, int add)

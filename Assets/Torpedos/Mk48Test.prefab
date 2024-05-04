@@ -9,10 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8988908188242557284}
+  - component: {fileID: 468564275391177606}
   - component: {fileID: 1339226593160372554}
   - component: {fileID: 3138398762810859015}
   - component: {fileID: 4714781635130340220}
-  - component: {fileID: 6845710581324455763}
   m_Layer: 0
   m_Name: Mk48Test
   m_TagString: Untagged
@@ -30,11 +30,28 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 140.42712, y: -12.362581, z: 32.25819}
-  m_LocalScale: {x: 1, y: 0.5, z: 15.61}
+  m_LocalScale: {x: 1, y: 1, z: 15}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &468564275391177606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869201080379810953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6d5cc789568d0d418b92a07ae46bfd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  launchTime: 0
+  searchStartTime: 0
+  phase: 1
+  Ne: 3
+  snakeState: 0
 --- !u!33 &1339226593160372554
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -104,30 +121,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 2
-  m_Direction: 1
+  m_Radius: 0.94
+  m_Height: 1
+  m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6845710581324455763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3869201080379810953}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1c8ffa671def0142aa4014cc95bda4c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  LOS: {x: 0, y: 0, z: 0}
-  LOSAzEl: {x: 0, y: 0}
-  range: 0
-  Vown: {x: 0, y: 0, z: 0}
-  Vtarget: {x: 0, y: 0, z: 0}
-  Vrelative: {x: 0, y: 0, z: 0}
-  Ne: 3
-  N: 0
-  Omega: {x: 0, y: 0, z: 0}
-  ownForward: {x: 0, y: 0, z: 0}
-  ownForwardHeadingPitchRoll: {x: 0, y: 0, z: 0}

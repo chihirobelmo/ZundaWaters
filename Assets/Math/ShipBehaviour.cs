@@ -295,24 +295,35 @@ public class ShipBehaviour : MonoBehaviour
         var forceG =
             dividedPos.Select(pos =>
             {
-                float g = pos.y < 0 ? gravity - ballastAirMPS2 : gravity;
+                float g = pos.y <= 0 ? gravity - ballastAirMPS2 : gravity;
                 float force = -g * (spec.kMassKg / dividedPos.Count());
                 return force;
             })
-            .Sum();
-
-        // gravity vs buyonancy result
-        Vector3 dVg = Vector3.up * forceG / spec.kMassKg;
+            .Sum() * Vector3.up;
 
         // thrust available if only propeller under water
-        Vector3 dVThrust = (/*under water*/propeller.position.y < 0 ? ship.forward * thrustN : new Vector3()) / spec.kMassKg;
+        Vector3 forceThrust = (/*under water*/propeller.position.y < 0 ? ship.forward * thrustN : new Vector3());
 
         // Reynolds number
         var reynoldsWater = Reynolds(waterRho, velocity.magnitude, spec.kLengthMeter, waterMu);
         var reynoldsAir = Reynolds(airRho, velocity.magnitude, spec.kLengthMeter, airMu);
 
+        // estimated projected area
+        Vector3 S = new Vector3(
+            spec.kLengthMeter * spec.kRadiusMeter * 2.0f * circleAreaRatioToSquare,
+            spec.kLengthMeter * spec.kRadiusMeter * 2.0f * circleAreaRatioToSquare,
+            spec.kRadiusMeter * spec.kRadiusMeter * Mathf.PI
+        );
+
+        // Calculate the absolute values of the dot products of the ship's direction vectors and the surface normal
+        Vector3 projectedAreaWorld = new Vector3(
+            Mathf.Abs(Vector3.Dot(S, ship.right)),
+            Mathf.Abs(Vector3.Dot(S, ship.up)),
+            Mathf.Abs(Vector3.Dot(S, ship.forward))
+        );
+
         // Velocity update
-        velocity += VtDt(reynoldsWater, spec.kMassKg, dVg + dVThrust, velocity) * dt;
+        velocity += DuDt(spec.kMassKg, (forceG + forceThrust), 1.0f, projectedAreaWorld, ship.position.y < 0 ? waterRho : airRho, velocity) * dt;
 
         // forward speed and drag power
         float forwardSpeed = velocity.magnitude * Vector3.Dot(velocity, ship.forward);

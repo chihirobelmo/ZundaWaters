@@ -148,9 +148,33 @@ public static class StaticMath
     public static float Sin(this float theta) => Mathf.Sin(theta * Mathf.Deg2Rad);
     public static float Abs(this float theta) => Mathf.Abs(theta * Mathf.Deg2Rad);
 
-    //public static float DuDt(float rhoS/*Kg/m^3*/, float rhoF, float V/*m^3*/, float S, )
+    /// <summary>
+    /// Increase Speed per second
+    /// </summary>
+    /// <param name="M">Mass in Kg</param>
+    /// <param name="N">force in N</param>
+    /// <param name="Cd">Coefficient Drag</param>
+    /// <param name="S">Projected Area in meter^2</param>
+    /// <param name="rho">water or air rho</param>
+    /// <param name="u">speed m/s</param>
+    /// <returns></returns>
+    public static Vector3 DuDt(float M, Vector3 N, float Cd, Vector3 S, float rho, Vector3 u)
+        => (1 / M) * (N - Cd *  rho * new Vector3(S.x * u.x * u.x, S.y * u.y * u.y, S.z * u.z * u.z) * 0.5f);
 
-    //// Below VtDt may not work well. ////
+    /// <summary>
+    /// Increase Speed per second
+    /// </summary>
+    /// <param name="M">Mass in Kg</param>
+    /// <param name="N">force in N</param>
+    /// <param name="Cd">Coefficient Drag</param>
+    /// <param name="S">Projected Area in meter^2</param>
+    /// <param name="rho">water or air rho</param>
+    /// <param name="u">speed m/s</param>
+    /// <returns></returns>
+    public static float DuDt(float M, float N, float Cd, float S, float rho, float u)
+        => (1 / M) * (N - Cd * S * rho * u * u * 0.5f);
+
+    //// Below VtDt may not work well if you directly apply reynolds ////
 
     /// <summary>
     /// Calculate velocity increase per time.
@@ -177,6 +201,8 @@ public static class StaticMath
                        (-k.y / m) * (v.y - m * a.y / (ESP + k.y)),
                        (-k.z / m) * (v.z - m * a.z / (ESP + k.z)) );
     }
+
+    //// VRotation //////
 
     public static Vector3 VRotation(Vector3 omegaRad, float radius) => omegaRad * radius;
     public static float VRotation(float omegaRad, float radius) => omegaRad * radius;

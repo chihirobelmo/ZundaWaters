@@ -158,8 +158,8 @@ public static class StaticMath
     /// <param name="rho">water or air rho</param>
     /// <param name="u">speed m/s</param>
     /// <returns></returns>
-    public static Vector3 DuDt(float M, Vector3 N, float Cd, Vector3 S, float rho, Vector3 u)
-        => (1 / M) * (N - Cd *  rho * new Vector3(S.x * u.x * u.x, S.y * u.y * u.y, S.z * u.z * u.z) * 0.5f);
+    public static Vector3 DuDt(float M, Vector3 F, float Cd, Vector3 S, float rho, Vector3 u)
+        => (1 / M) * (F - Cd *  rho * new Vector3(S.x * u.x * u.x * Mathf.Sign(u.x), S.y * u.y * u.y * Mathf.Sign(u.y), S.z * u.z * u.z * Mathf.Sign(u.z)) * 0.5f);
 
     /// <summary>
     /// Increase Speed per second
@@ -171,8 +171,8 @@ public static class StaticMath
     /// <param name="rho">water or air rho</param>
     /// <param name="u">speed m/s</param>
     /// <returns></returns>
-    public static float DuDt(float M, float N, float Cd, float S, float rho, float u)
-        => (1 / M) * (N - Cd * S * rho * u * u * 0.5f);
+    public static float DuDt(float M, float F, float Cd, float S, float rho, float u)
+        => (1 / M) * (F - Cd * S * rho * u * u * Mathf.Sign(u) * 0.5f);
 
     //// Below VtDt may not work well if you directly apply reynolds ////
 

@@ -103,6 +103,8 @@ public class Main : MonoBehaviour {
 
     public static void NotifyFloatingPointResetTiming()
     {
+        if (clientPlayer == null) return;
+
         // floating point origin reset
         if (clientPlayer.transform.position.x >= 256)
         {
@@ -147,7 +149,7 @@ public class Main : MonoBehaviour {
             x.transform.position += offsetForReset;
         });
         torpedos.ForEach(x => {
-            x.GetComponent<Mk48Test>().OwnLastPosition += offsetForReset;
+            x.GetComponent<TorpedoBehaviour>().OwnLastPosition += offsetForReset;
             x.transform.position += offsetForReset;
         });
         clientPlayer.GetComponent<ShipBehaviour>().LastPosition += offsetForReset;

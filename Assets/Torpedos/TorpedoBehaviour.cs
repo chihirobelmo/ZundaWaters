@@ -189,6 +189,8 @@ public class TorpedoBehaviour : MonoBehaviour
 
     public void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject == null) return;
+
         Debug.Log(this + " Collides " + collision.gameObject + " as " + collision);
 
         Action destroyThis = () =>

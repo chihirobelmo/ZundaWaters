@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1339226593160372554}
   - component: {fileID: 3138398762810859015}
   - component: {fileID: 4714781635130340220}
+  - component: {fileID: 3623555612025136517}
   m_Layer: 0
   m_Name: Mk48Test
   m_TagString: Untagged
@@ -52,6 +53,8 @@ MonoBehaviour:
   phase: 1
   Ne: 3
   snakeState: 0
+  predictedTargetVector: {x: 0, y: 0, z: 0}
+  currentVector: {x: 0, y: 0, z: 0}
 --- !u!33 &1339226593160372554
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -125,3 +128,36 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 2
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!215 &3623555612025136517
+ReflectionProbe:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3869201080379810953}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Type: 0
+  m_Mode: 0
+  m_RefreshMode: 0
+  m_TimeSlicingMode: 0
+  m_Resolution: 128
+  m_UpdateFrequency: 0
+  m_BoxSize: {x: 10, y: 10, z: 10}
+  m_BoxOffset: {x: 0, y: 0, z: 0}
+  m_NearClip: 50
+  m_FarClip: 1000
+  m_ShadowDistance: 100
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IntensityMultiplier: 1
+  m_BlendDistance: 1
+  m_HDR: 1
+  m_BoxProjection: 0
+  m_RenderDynamicObjects: 0
+  m_UseOcclusionCulling: 1
+  m_Importance: 1
+  m_CustomBakedTexture: {fileID: 0}

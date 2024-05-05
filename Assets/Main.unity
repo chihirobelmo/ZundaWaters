@@ -38,7 +38,8 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 2aa182ed2190a054b999825d19c0d407, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.34722385, g: 0.3679255, b: 0.37135953, a: 1}
+  m_IndirectSpecularColor: {r: 0.0003650327, g: 0.00000081510655, b: 0.013778172,
+    a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -123,6 +124,85 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &77222647
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 77222650}
+  - component: {fileID: 77222649}
+  - component: {fileID: 77222648}
+  m_Layer: 4
+  m_Name: Ocean
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &77222648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 77222647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 229b002be8cec0f4aaff305f55bf8711, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wavesGenerator: {fileID: 77222649}
+  viewer: {fileID: 0}
+  oceanMaterial: {fileID: 2100000, guid: 79f16f7e2e961cc46828737b584510ee, type: 2}
+  updateMaterialProperties: 0
+  showMaterialLods: 0
+  lengthScale: 250
+  vertexDensity: 30
+  clipLevels: 8
+  skirtSize: 55.4
+--- !u!114 &77222649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 77222647}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5d3cdfdb2343074f9ede6920b2cdfff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: 256
+  wavesSettings: {fileID: 11400000, guid: a15d9b9d6a919584db82c8af30e854c9, type: 2}
+  alwaysRecalculateInitials: 0
+  lengthScale0: 256
+  lengthScale1: 64
+  lengthScale2: 16
+  fftShader: {fileID: 7200000, guid: 38e7049002205c24c8328830bc846265, type: 3}
+  initialSpectrumShader: {fileID: 7200000, guid: 5cb4d3604a2a309418e28b4c84483b75,
+    type: 3}
+  timeDependentSpectrumShader: {fileID: 7200000, guid: 4587edbecce07574f8859b4d3866ce21,
+    type: 3}
+  texturesMergerShader: {fileID: 7200000, guid: 830e2e5e1419ea9409f3c6295083f26a,
+    type: 3}
+--- !u!4 &77222650
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 77222647}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &261428977
 GameObject:
   m_ObjectHideFlags: 0
@@ -667,74 +747,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 911689474}
   m_CullTransparentMesh: 1
---- !u!1001 &5838844684605924739
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 174338559257334541, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5970169805052996000, guid: ee51fc0c604ad894694217df3a063b69,
-        type: 3}
-      propertyPath: m_Name
-      value: Ocean
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: ee51fc0c604ad894694217df3a063b69, type: 3}
 --- !u!1001 &6112146878284062314
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -809,7 +821,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 6112146878284062314}
-  - {fileID: 5838844684605924739}
+  - {fileID: 77222650}
   - {fileID: 307646691}
   - {fileID: 700026735}
   - {fileID: 541189310}

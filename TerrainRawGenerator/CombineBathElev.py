@@ -26,7 +26,13 @@ topography = ((arr2 / 255.0) * 6400).astype(int)  # Scale to 0 to 6400
 depth = bathymetry + topography
 
 # Scale the depth values to 16-bit
-depth16 = ((depth + 8000) * 65535 // (8000 + 6400)).astype(np.uint16)  # Scale to 0 to 65535
+#   depth16 = ((depth + 8000) * 65535 // (8000 + 6400)).astype(np.uint16)  # Scale to 0 to 65535
+
+# Clip the depth values to the range -2000 to 8000
+depth_clipped = np.clip(depth, -2000, 8000)
+
+# Scale the clipped depth values to the range 0 to 65535
+depth16 = ((depth_clipped + 2000) * 65535 // (8000 + 2000)).astype(np.uint16)  # Scale to 0 to 65535
 
 # Write the raw image data to a file
 depth16.tofile('BD.raw')

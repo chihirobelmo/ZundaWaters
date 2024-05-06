@@ -38,8 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 2aa182ed2190a054b999825d19c0d407, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0003650327, g: 0.00000081510655, b: 0.013778172,
-    a: 1}
+  m_IndirectSpecularColor: {r: 0.34722385, g: 0.3679255, b: 0.37135953, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -358,7 +357,7 @@ GameObject:
   - component: {fileID: 307646689}
   - component: {fileID: 307646688}
   m_Layer: 6
-  m_Name: Canvas
+  m_Name: Screen1Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -523,7 +522,7 @@ GameObject:
   - component: {fileID: 541189309}
   - component: {fileID: 541189308}
   m_Layer: 6
-  m_Name: Camera
+  m_Name: Screen1Camera
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

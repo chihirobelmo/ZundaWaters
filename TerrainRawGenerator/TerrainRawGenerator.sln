@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerrainRawGenerator", "TerrainRawGenerator.csproj", "{AA36916F-E525-4B61-8DEE-E4A12A7AFEFD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA36916F-E525-4B61-8DEE-E4A12A7AFEFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA36916F-E525-4B61-8DEE-E4A12A7AFEFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA36916F-E525-4B61-8DEE-E4A12A7AFEFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA36916F-E525-4B61-8DEE-E4A12A7AFEFD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BB977EF7-8909-4CCF-A37D-8E3DC04D1330}
+	EndGlobalSection
+EndGlobal

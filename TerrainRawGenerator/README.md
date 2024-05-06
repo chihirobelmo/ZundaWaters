@@ -29,6 +29,16 @@ Imagery by Jesse Allen, NASA's Earth Observatory, using data from the General Ba
 
 Published July 21, 2005
 
+# Blue Marble: Land Surface, Shallow Water, and Shaded Topography
+
+https://visibleearth.nasa.gov/images/57752/blue-marble-land-surface-shallow-water-and-shaded-topography
+
+This spectacular “blue marble” image is the most detailed true-color image of the entire Earth to date. Using a collection of satellite-based observations, scientists and visualizers stitched together months of observations of the land surface, oceans, sea ice, and clouds into a seamless, true-color mosaic of every square kilometer (.386 square mile) of our planet. These images are freely available to educators, scientists, museums, and the public. This record includes preview images and links to full resolution versions up to 21,600 pixels across.
+
+Much of the information contained in this image came from a single remote-sensing device-NASA’s Moderate Resolution Imaging Spectroradiometer, or MODIS. Flying over 700 km above the Earth onboard the Terra satellite, MODIS provides an integrated tool for observing a variety of terrestrial, oceanic, and atmospheric features of the Earth. The land and coastal ocean portions of these images are based on surface observations collected from June through September 2001 and combined, or composited, every eight days to compensate for clouds that might block the sensor’s view of the surface on any single day. Two different types of ocean data were used in these images: shallow water true color data, and global ocean color (or chlorophyll) data. Topographic shading is based on the GTOPO 30 elevation dataset compiled by the U.S. Geological Survey’s EROS Data Center. MODIS observations of polar sea ice were combined with observations of Antarctica made by the National Oceanic and Atmospheric Administration’s AVHRR sensor—the Advanced Very High Resolution Radiometer. The cloud image is a composite of two days of imagery collected in visible light wavelengths and a third day of thermal infra-red imagery over the poles. Global city lights, derived from 9 months of observations from the Defense Meteorological Satellite Program, are superimposed on a darkened land surface map.
+
+NASA Goddard Space Flight Center Image by Reto Stöckli (land surface, shallow water, clouds). Enhancements by Robert Simmon (ocean color, compositing, 3D globes, animation). Data and technical support: MODIS Land Group; MODIS Science Data Support Team; MODIS Atmosphere Group; MODIS Ocean Group Additional data: USGS EROS Data Center (topography); USGS Terrestrial Remote Sensing Flagstaff Field Center (Antarctica); Defense Meteorological Satellite Program (city lights).
+
 # Global Image Grid
 
 https://visibleearth.nasa.gov/grid
@@ -63,3 +73,12 @@ All information provided by GEBCO on its web pages is made available to provide 
 GEBCO is essentially a deep ocean product and does not include detailed bathymetry for shallow shelf waters. Even to the present day, most areas of the world’s oceans have not been fully surveyed and, for the most part, bathymetric mapping is an interpretation based on random tracklines of data from many different sources. The quality and coverage of data from these sources is highly variable. Although the GEBCO grid is presented at one minute intervals of latitude and longitude, this does not imply that knowledge is available on sea floor depth at this resolution - the depth in most one minute squares of the world’s oceans has yet to be measured.
 
 GEBCO's data sets are not to be used for navigation or for any purpose relating to safety at sea.
+
+# Enviromental Setup
+
+install python3 then
+```
+pip install pyproj
+pip install rasterio
+pip install pillow
+```

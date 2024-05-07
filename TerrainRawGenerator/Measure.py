@@ -1,7 +1,7 @@
 import rasterio
 
 # Open the file
-with rasterio.open('AZE.tif') as src:
+with rasterio.open('AZEE.tif') as src:
     # Get the spatial resolution
     transform = src.transform
     x_res = transform[0]

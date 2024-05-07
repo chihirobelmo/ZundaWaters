@@ -13,8 +13,8 @@ input_dir = "./"  # adjust to your needs
 output_file = "./merged.tif"
 
 # File list
-# search_criteria = "gebco_08_rev_bath_D*_grey_geo.tif"
-search_criteria = "east_part_*_1.tif"
+search_criteria = "gebco_08_rev_elev_D*_grey_geo.tif"
+# search_criteria = "east_part_*_1.tif"
 q = os.path.join(input_dir, search_criteria)
 file_list = glob.glob(q)
 

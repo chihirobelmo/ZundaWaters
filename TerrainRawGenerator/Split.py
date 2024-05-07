@@ -12,22 +12,22 @@ def split_into_parts(input_file, output_pattern):
         part_height = height // 2
 
         # Define the geographical coordinates of the entire image
-        left, bottom, right, top = -180, -90, 180, 90
+        left, bottom, right, top = 0, -90, 180, 90
 
         # Calculate the geographical size of each part
-        part_lon = (right - left) / 2
+        part_lon = (right - left) / width  # use width instead of part_width
         part_lat = (top - bottom) / 2
 
         for i in range(2):
             for j in range(2):
-                # Define the window at the bottom-left corner of the image
+                # Define the window at the top-left corner of the image
                 window = Window(j * part_width, i * part_height, part_width, part_height)
                 data = src.read(window=window)  # read all bands
 
                 # Calculate the geographical coordinates of the part
-                part_left = left + j * part_lon
+                part_left = left + 90 * j  # start from left + 90 when j is 1
                 part_top = top - i * part_lat
-                part_right = part_left + part_lon
+                part_right = part_left + 90  # add 90 to part_left
                 part_bottom = part_top - part_lat
                 
                 # Calculate the transform of the part
@@ -38,5 +38,5 @@ def split_into_parts(input_file, output_pattern):
                     dst.write(data)  # write all bands
 
 # Split the west and east files
-split_into_parts('land_shallow_topo_west.tif', 'west_part_{i}_{j}.tif')
+# split_into_parts('land_shallow_topo_west.tif', 'west_part_{i}_{j}.tif')
 split_into_parts('land_shallow_topo_east.tif', 'east_part_{i}_{j}.tif')

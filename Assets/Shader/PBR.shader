@@ -3,10 +3,9 @@ Shader "Custom/PBR"
     Properties
     {
         _Albedo ("Albedo (RGB)", 2D) = "white" {}
-        _ARM ("AO Roughness MEtalness (ARM)", 2D) = "white" {}
+        _ARM ("AO Roughness Metalness (ARM)", 2D) = "white" {}
         _Normal ("Normal", 2D) = "white" {}
         _BRDF ("BRDF LUT", 2D) = "white" {}
-        _Cube("Reflection Map", CUBE) = "" {}
     }
     SubShader
     {
@@ -28,6 +27,7 @@ Shader "Custom/PBR"
             samplerCUBE _Cube;
 
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc" // _LightColor0 に対し
             #include "Lighting.cginc"
             #include "AutoLight.cginc"
 
@@ -102,65 +102,93 @@ Shader "Custom/PBR"
                 return F0 + (1 - F0) * pow(1 - cosTheta, 5);
             }
 
+            // Note: Disney diffuse must be multiply by diffuseAlbedo / PI. This is done outside of this function.
+            half DisneyDiffuseRe(half NdotV, half NdotL, half LdotH, half perceptualRoughness)
+            {
+                half fd90 = 0.5 + 2 * LdotH * LdotH * perceptualRoughness;
+                // Two schlick fresnel term
+                half lightScatter   = (1 + (fd90 - 1) * Pow5(1 - NdotL));
+                half viewScatter    = (1 + (fd90 - 1) * Pow5(1 - NdotV));
+
+                return lightScatter * viewScatter;
+            }
+
             float4 frag (v2f i) : SV_Target {
 
                 fixed shadow = SHADOW_ATTENUATION(i);
 
 	            float3 radiance = _LightColor0;
-                float L = normalize(_WorldSpaceLightPos0.xyz);
-                float V = normalize(i.worldViewDir);
-                float H = normalize(V + L);
-                float N = normalize(i.normal);
+                float3 L = normalize(_WorldSpaceLightPos0.xyz);
+                float3 V = normalize(UnityWorldSpaceViewDir(i.worldPos));
+                float3 H = normalize(V + L);
+                float3 N = i.normal;
+                float3 R = reflect(-V, N);
 
                 float NdotL = max(dot(N, L), 0.0f);
                 float NdotV = max(dot(N, V), 0.0f);
                 float NdotH = max(dot(N, H), 0.0f);
                 float HdotV = max(dot(H, V), 0.0f);
                 float LdotH = max(dot(L, H), 0.0f);
+                float LdotV = max(dot(L, V), 0.0f);
 
                 float3 albedo = tex2D(_Albedo, i.texcoord);
                 float ambientOcclusion = tex2D(_ARM, i.texcoord).r;
                 float roughness = tex2D(_ARM, i.texcoord).g;
                 float metalness = tex2D(_ARM, i.texcoord).b;
-
-                float3 F0 = lerp(0.04, albedo, metalness);
                 
-                // Frostbite Diffuse BRDF (Normalized Disney model)
-                float energyBias = lerp(0.0, 0.5, roughness);
-                float energyFactor = lerp(1.0, 1.0 / 1.51, roughness);
-                float Fd90 = energyBias + 2.0 * LdotH * LdotH * roughness;
-                float3 FL = FresnelSchlick(NdotL, float3(1.0, 1.0, 1.0), Fd90);
-                float3 FV = FresnelSchlick(NdotV, float3(1.0, 1.0, 1.0), Fd90);
-
-	            // cook torrance
+                float3 F0 = lerp(0.04, albedo, metalness);
                 float F = FresnelSchlick(NdotV, F0);
-                float D = NdfGGX(NdotH, roughness);
-                float G = GaSchlickGGX(NdotL, NdotV, roughness);
 
-	            // unreal engine BRDF
-	            float3 kd = lerp((float3)1 - F, (float3)0, metalness);
-
-                float3 diffuseBRDF = albedo * kd  * FL * FV / 3.1415;
-                float3 specularBRDF = F * G * D / (4 * NdotL * NdotV);
-
-                float3 BRDF = (diffuseBRDF + specularBRDF) * radiance * NdotL * shadow;
-
-                float R = reflect(-i.worldViewDir, i.normal);
-
-                float4 envDiffuse = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, N, UNITY_SPECCUBE_LOD_STEPS);
-                float4 envSpecular = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, R, roughness * UNITY_SPECCUBE_LOD_STEPS);
+                float3 kd = lerp((float3)1 - F, (float3)0, metalness);
+                float3 envDiffuse = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, N, UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
+                float3 envSpecular = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, R, roughness * UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
 
                 float2 BRDFLUT = tex2D(_BRDF, float2(NdotV, roughness)).rg;
 
-                float3 diffuseIBL = kd * envDiffuse * albedo / 3.1415;
-                float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * envSpecular;
+                // UE Logic
+                if (true) {
 
-                float3 IBL = diffuseIBL + specularIBL;
+                    float3 albedoLinear = pow(albedo, 2.2);
 
-                float4 color = float4(BRDF + IBL * ambientOcclusion, 1);
-                
-                //UNITY_APPLY_FOG(i.fogCoord, color);  // Apply fog to the color
-                return color;
+                    // cook torrance
+                    float D = NdfGGX(NdotH, roughness);
+                    float G = GaSchlickGGX(NdotL, NdotV, roughness);
+
+                    // unreal engine BRDF
+                    float3 diffuseBRDF = albedoLinear * kd / 3.1415;
+                    float3 specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
+
+                    float3 BRDF = (diffuseBRDF + specularBRDF) * NdotL * shadow;
+
+                    float3 diffuseIBL = kd * pow(envDiffuse, 2.2) * albedoLinear / 3.1415;
+                    float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * pow(envSpecular, 2.2);
+
+                    float3 IBL = diffuseIBL + specularIBL;
+
+                    float4 color = float4(radiance * BRDF + IBL * ambientOcclusion, 1);
+                    
+                    return pow(color, 1.0 / 2.2);
+                }
+                // Unity Logic
+                else {
+                    float3 diffuseIBL = kd * envDiffuse * albedo / 3.1415;
+                    float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * envSpecular;
+
+                    float perceptualRoughness = SmoothnessToPerceptualRoughness (/*smoothness*/roughness);
+                    float sqRoughness = max(0.002, roughness * roughness);
+
+                    float D = SmithJointGGXVisibilityTerm(NdotL, NdotV, sqRoughness);
+                    float G = GGXTerm(NdotH, roughness);
+
+                    half diffuseTerm = DisneyDiffuseRe(NdotV, NdotL, LdotH, sqRoughness) * NdotL;
+                    half specularTerm = max(0, NdotL * G * D * 3.1415); // Torrance-Sparrow model, Fresnel is applied later
+                    half surfaceReduction = 1.0 / (sqRoughness*sqRoughness + 1.0);  
+                    float3 color = albedo * (diffuseIBL + radiance * diffuseTerm)
+                    + specularTerm * radiance * FresnelSchlick(LdotH, radiance)
+                    + surfaceReduction * specularIBL * FresnelSchlick(NdotV, radiance, sqRoughness);
+                    
+                    return float4(color, 1);
+                }
             }
             ENDCG
         }

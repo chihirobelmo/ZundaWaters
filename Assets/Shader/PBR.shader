@@ -27,8 +27,9 @@ Shader "Custom/PBR"
             samplerCUBE _Cube;
 
             #include "UnityCG.cginc"
-            #include "UnityLightingCommon.cginc" // _LightColor0 に対し
+            //#include "UnityLightingCommon.cginc"
             #include "Lighting.cginc"
+            #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
             #include "AutoLight.cginc"
 
             struct appdata {
@@ -38,8 +39,11 @@ Shader "Custom/PBR"
                 float4 tangent : TANGENT;
             };
 
+            // It turns out when you use TRANSFER_VERTEX_TO_FRAGMENT to create shadows 
+            // if you have a custom struct and your semantics are not named exactly as they are here: 
+            // https://docs.unity3d.com/Manual/SL-VertexProgramInputs.html
             struct v2f {
-                float4 vertex : SV_POSITION;
+                float4 pos : SV_POSITION;
                 float3 worldPos : TEXCOORD0;
                 float3 normal : TEXCOORD1;
                 float3 worldViewDir : TEXCOORD2;
@@ -54,10 +58,10 @@ Shader "Custom/PBR"
                 v2f o;
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldViewDir = normalize(UnityWorldSpaceViewDir(o.worldPos));
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.pos = UnityObjectToClipPos(v.vertex);
                 o.normal = UnityObjectToWorldNormal(v.normal);
-                o.screenPos = ComputeScreenPos(o.vertex);
-                //o.worldRefl = reflect(-o.worldViewDir, o.normal);
+                o.screenPos = ComputeScreenPos(o.pos);
+                o.tangent = v.tangent;
                 o.texcoord = v.texcoord;
                 TRANSFER_SHADOW(o)
                 //UNITY_TRANSFER_FOG(o,o.vertex);  // Transfer fog data

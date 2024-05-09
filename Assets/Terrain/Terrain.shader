@@ -4,6 +4,10 @@
 
 Shader "Custom/ColorByHeight" {
     Properties {
+        _SeaBedNormal ("Sea Bed Normal", 2D) = "white" {}
+        //_SeaBedHeight ("Sea Bed Height", 2D) = "white" {}
+        _LandNormal ("Land Normal", 2D) = "white" {}
+
         _ColorLow ("Color at Lowest Point", Color) = (1, 0, 0, 1)
         _ColorSurface ("Color at WaterSurface Point", Color) = (0, 1, 0, 1)
         _ColorLand ("Color at LandSurface Point", Color) = (0, 1, 0, 1)
@@ -26,6 +30,13 @@ Shader "Custom/ColorByHeight" {
             // #pragma multi_compile_fwdbase  // Compile for forward rendering base pass
             // #pragma multi_compile_shadowcaster  // Add this line
             
+            Texture2D _SeaBedNormal;
+            Texture2D _LandNormal;
+            //sampler2D _SeaBedHeight;
+            float4 _SeaBedHeight_ST;
+
+            SamplerState sampler_point_repeat;
+
             #include "UnityCG.cginc"
             #include "Lighting.cginc"
             #include "AutoLight.cginc"
@@ -33,6 +44,7 @@ Shader "Custom/ColorByHeight" {
             struct appdata {
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
+                float2 texcoord : TEXCOORD0;
             };
 
             struct v2f {
@@ -40,6 +52,7 @@ Shader "Custom/ColorByHeight" {
                 float3 worldPos : TEXCOORD0;
                 float3 normal : TEXCOORD1;
                 float3 worldViewDir : TEXCOORD2;
+                float2 texcoord : TEXCOORD3;
                 //float4 lightmapUV : TEXCOORD2;  // Manually define the lightmap UV coordinates
                 //float4 screenPos : TEXCOORD3;  // Manually define the screen position
                 float3 worldRefl : TEXCOORD4;
@@ -60,10 +73,15 @@ Shader "Custom/ColorByHeight" {
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldViewDir = normalize(UnityWorldSpaceViewDir(o.worldPos));
                 o.vertex = UnityObjectToClipPos(v.vertex);
+                //float d = tex2Dlod(_SeaBedHeight, float4(v.texcoord.xy,0,0)).r * 2 - 1;
+                //o.vertex.y += d;
                 o.normal = UnityObjectToWorldNormal(v.normal);
                 //o.lightmapUV = v.vertex;  // Set the lightmap UV coordinates
                 //o.screenPos = ComputeScreenPos(o.vertex);  // Set the screen position
                 o.worldRefl = reflect(-o.worldViewDir, o.normal);
+                // In your case, if your terrain is 100000 meters square and you want the texture to tile every 100 meters, 
+                // you would set the tiling factor to 1000 (because 100000 / 100 = 1000).
+                o.texcoord = v.texcoord;
                 //UNITY_TRANSFER_FOG(o,o.vertex);  // Transfer fog data
                 TRANSFER_SHADOW(o)
                 return o;
@@ -78,15 +96,24 @@ Shader "Custom/ColorByHeight" {
                 fixed shadow = SHADOW_ATTENUATION(i);
                 float3 normalDirection = normalize(i.normal);
 
-                float4 skyDiffuse = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, normalDirection);
-                float3 envDiffuse = DecodeHDR(skyDiffuse, unity_SpecCube0_HDR);
-                float4 skySpecular = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, i.worldRefl);
-                float3 envSpecular = DecodeHDR(skySpecular, unity_SpecCube0_HDR);
-
                 float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
                 float ndotl = max(0, dot(normalDirection, lightDirection));
                 float ndotv = max(0, dot(normalDirection, i.worldViewDir));
                 float F = fresnelSchlick(ndotv, 0.04);
+                
+                if (i.worldPos.y < _HeightMid) {
+                    normalDirection += _SeaBedNormal.Sample(sampler_point_repeat, i.texcoord.xy * 10000) * 2 - 1;
+                    normalDirection += _SeaBedNormal.Sample(sampler_point_repeat, i.texcoord.xy * 1000) * 2 - 1;
+                    normalDirection += _SeaBedNormal.Sample(sampler_point_repeat, i.texcoord.xy * 100) * 2 - 1;
+                    normalDirection += _SeaBedNormal.Sample(sampler_point_repeat, i.texcoord.xy * 10) * 2 - 1;
+                } else {
+                    normalDirection += _LandNormal.Sample(sampler_point_repeat, i.texcoord.xy * 1000) * 2 - 1;
+                }
+
+                float4 skyDiffuse = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, normalDirection);
+                float3 envDiffuse = DecodeHDR(skyDiffuse, unity_SpecCube0_HDR);
+                float4 skySpecular = UNITY_SAMPLE_TEXCUBE(unity_SpecCube0, i.worldRefl);
+                float3 envSpecular = DecodeHDR(skySpecular, unity_SpecCube0_HDR);
 
                 float4 color;
                 if (i.worldPos.y < _HeightMid) {

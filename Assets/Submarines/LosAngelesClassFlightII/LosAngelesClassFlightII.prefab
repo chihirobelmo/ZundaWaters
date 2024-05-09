@@ -527,7 +527,7 @@ MonoBehaviour:
   targetBallastAirMPS2: 0
   angleAileronDeg: 0
   angleRudderDeg: 0
-  ballastAirMPS2: 10.8
+  ballastAirMPS2: 10
   thrustN: 22.8
   velocityMPS: {x: 0, y: 0, z: 9.55}
   angularSpeedDeg: {x: 0, y: 0, z: 0}
@@ -551,8 +551,8 @@ MonoBehaviour:
   kThrustChangeRateNPerSec: 14000000
   kSurfaceChangeRateDegPerSec: 30
   kBallastChangeRateMeterPerSec2: 0.2
-  kMaxBallastAirMeterPerSec2: 10.2
-  kMinBallastAirMeterPerSec2: 9.6
+  kMaxBallastAirMeterPerSec2: 10.4
+  kMinBallastAirMeterPerSec2: 9.2
   kLengthMeter: 110
   kRadiusMeter: 5
   kMaxThrustPowerMass: 1

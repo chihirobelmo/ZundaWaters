@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _ParallaxMap
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -43,8 +43,20 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _LandArm:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LandNormal:
+        m_Texture: {fileID: 2800000, guid: 0337960ae4a77c042be6bfcc4235e40d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LandTex:
+        m_Texture: {fileID: 2800000, guid: 0337960ae4a77c042be6bfcc4235e40d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 6c2351b388b9dd14eab386c0a24c7e5d, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -59,6 +71,22 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SeaBedArm:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SeaBedHeight:
+        m_Texture: {fileID: 2800000, guid: ee8069c22d376a043b82ba2c521583b6, type: 3}
+        m_Scale: {x: 1000, y: 1000}
+        m_Offset: {x: 0, y: 0}
+    - _SeaBedNormal:
+        m_Texture: {fileID: 2800000, guid: 7d006cc573625184b8320c5cb3921bd9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SeaBedTex:
+        m_Texture: {fileID: 2800000, guid: 7d006cc573625184b8320c5cb3921bd9, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
@@ -68,7 +96,7 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _HeightHigh: 100
+    - _HeightHigh: 8000
     - _HeightLow: -300
     - _HeightMid: 0
     - _Metallic: 0
@@ -88,4 +116,6 @@ Material:
     - _ColorMid: {r: 0.5019608, g: 0.5019608, b: 0.5019608, a: 1}
     - _ColorSurface: {r: 0, g: 0.2509804, b: 0.2509804, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MainTex_ST: {r: 1, g: 1, b: 0, a: 0}
+    - _Tex_ST: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

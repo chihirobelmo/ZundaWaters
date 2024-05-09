@@ -197,17 +197,17 @@ public class ShipBehaviour : MonoBehaviour
             } },
             // E: Ballast more air
             { KeyCode.E, () => {
-                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 + kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
+                ballastAirMPS2 = Mathf.Clamp(ballastAirMPS2 + kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
             } },
             // C: Ballast more water
             { KeyCode.C, () => {
-                targetBallastAirMPS2 = Mathf.Clamp(targetBallastAirMPS2 - kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
+                ballastAirMPS2 = Mathf.Clamp(ballastAirMPS2 - kMps2Unit, Spec.kMinBallastAirMeterPerSec2, Spec.kMaxBallastAirMeterPerSec2);
             } },
             // X: Reset Yaw/Pitch/Ballast
             { KeyCode.X, () => {
                 targetPitchDeg = 0.0f;
                 targetRudderDeg = 0.0f;
-                targetBallastAirMPS2 = gravity;
+                ballastAirMPS2 = gravity;
             } },
         }
         .ToList()
@@ -253,7 +253,7 @@ public class ShipBehaviour : MonoBehaviour
     {
         // divide ships in each cell to calculate gravity and buyonancy.
         List<float> devz = FloatRange(-spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f, 3);
-        List<float> devy = FloatRange(-spec.kRadiusMeter * 0.33f, +spec.kRadiusMeter * 0.33f, 3);
+        List<float> devy = new List<float> { 0 }; //FloatRange(-spec.kRadiusMeter * 0.33f, +spec.kRadiusMeter * 0.33f, 3);
 
         //List<float> devz = new List<float> { -spec.kLengthMeter * 0.33f, +spec.kLengthMeter * 0.33f };
         //List<int> devy = Enumerable.Range((int)-spec.kRadiusMeter, (int)+spec.kRadiusMeter).ToList();

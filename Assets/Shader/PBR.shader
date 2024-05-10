@@ -39,7 +39,6 @@ Shader "Custom/PBR"
             samplerCUBE _Cube;
 
             #include "UnityCG.cginc"
-            //#include "UnityLightingCommon.cginc"
             #include "Lighting.cginc"
             #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
             #include "AutoLight.cginc"
@@ -190,6 +189,7 @@ Shader "Custom/PBR"
                 float F = FresnelSchlick(NdotV, F0);
 
                 float3 kd = lerp((float3)1 - F, (float3)0, metalness);
+                float3 scatterColor = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, V, UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
                 float3 envDiffuse = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, normal, UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
                 float3 envSpecular = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, R, roughness * UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
 
@@ -234,6 +234,13 @@ Shader "Custom/PBR"
 
                 float4 color = float4(BRDF + IBL * ambientOcclusion, alpha);
                 
+                // // ray marching to scatter inside water
+                // if (worldPos.y < 0) {
+                //     color.rgb *= scatterColor * (1 - exp(-0.001 * length(worldPos - _WorldSpaceCameraPos)));
+                // } else {
+                //     color.rgb += scatterColor * (1 - exp(-0.00001 * length(worldPos - _WorldSpaceCameraPos)));
+                // }
+
                 return pow(color, 1.0 / 2.2);
             }
             ENDCG

@@ -44,13 +44,13 @@ Shader "Custom/PBR"
             // https://docs.unity3d.com/Manual/SL-VertexProgramInputs.html
             struct v2f {
                 float4 pos : SV_POSITION;
+                float4 tangent : TANGENT;
                 float3 worldPos : TEXCOORD0;
                 float3 normal : TEXCOORD1;
                 float3 worldViewDir : TEXCOORD2;
                 float2 texcoord : TEXCOORD3;
-                float4 tangent : TEXCOORD4;
-                float4 screenPos : TEXCOORD5;
-                SHADOW_COORDS(6)
+                float4 screenPos : TEXCOORD4;
+                SHADOW_COORDS(5)
                 //UNITY_FOG_COORDS(7)  // Add fog coordinates
             };
 
@@ -125,74 +125,57 @@ Shader "Custom/PBR"
                 float3 L = normalize(_WorldSpaceLightPos0.xyz);
                 float3 V = normalize(UnityWorldSpaceViewDir(i.worldPos));
                 float3 H = normalize(V + L);
-                float3 N = i.normal;
-                float3 R = reflect(-V, N);
-
-                float NdotL = max(dot(N, L), 0.0f);
-                float NdotV = max(dot(N, V), 0.0f);
-                float NdotH = max(dot(N, H), 0.0f);
-                float HdotV = max(dot(H, V), 0.0f);
-                float LdotH = max(dot(L, H), 0.0f);
-                float LdotV = max(dot(L, V), 0.0f);
+                float3 N = normalize(i.normal);
+	            float3 T = normalize(i.tangent);
+                float3 B = cross(N, T);
+                float3x3 TBN = float3x3(T, B, N);
 
                 float3 albedo = tex2D(_Albedo, i.texcoord);
+                float alpha = tex2D(_Albedo, i.texcoord).a;
                 float ambientOcclusion = tex2D(_ARM, i.texcoord).r;
                 float roughness = tex2D(_ARM, i.texcoord).g;
                 float metalness = tex2D(_ARM, i.texcoord).b;
+                float3 normalMap = UnpackNormal(tex2D(_Normal, i.texcoord));
+
+                float3 normal = normalize(mul(normalMap, TBN));
+                float3 R = reflect(-V, normal);
+
+                float NdotL = max(dot(normal, L), 0.0f);
+                float NdotV = max(dot(normal, V), 0.0f);
+                float NdotH = max(dot(normal, H), 0.0f);
+                float HdotV = max(dot(H, V), 0.0f);
+                float LdotH = max(dot(L, H), 0.0f);
+                float LdotV = max(dot(L, V), 0.0f);
                 
                 float3 F0 = lerp(0.04, albedo, metalness);
                 float F = FresnelSchlick(NdotV, F0);
 
                 float3 kd = lerp((float3)1 - F, (float3)0, metalness);
-                float3 envDiffuse = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, N, UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
+                float3 envDiffuse = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, normal, UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
                 float3 envSpecular = DecodeHDR(UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, R, roughness * UNITY_SPECCUBE_LOD_STEPS), unity_SpecCube0_HDR);
 
                 float2 BRDFLUT = tex2D(_BRDF, float2(NdotV, roughness)).rg;
 
-                // UE Logic
-                if (true) {
+                float3 albedoLinear = pow(albedo, 2.2);
 
-                    float3 albedoLinear = pow(albedo, 2.2);
+                // cook torrance
+                float D = NdfGGX(NdotH, roughness);
+                float G = GaSchlickGGX(NdotL, NdotV, roughness);
 
-                    // cook torrance
-                    float D = NdfGGX(NdotH, roughness);
-                    float G = GaSchlickGGX(NdotL, NdotV, roughness);
+                // unreal engine BRDF
+                float3 diffuseBRDF = albedoLinear * kd / 3.1415;
+                float3 specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
 
-                    // unreal engine BRDF
-                    float3 diffuseBRDF = albedoLinear * kd / 3.1415;
-                    float3 specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
+                float3 BRDF = (diffuseBRDF + specularBRDF) * NdotL * shadow;
 
-                    float3 BRDF = (diffuseBRDF + specularBRDF) * NdotL * shadow;
+                float3 diffuseIBL = kd * pow(envDiffuse, 2.2) * albedoLinear / 3.1415;
+                float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * pow(envSpecular, 2.2);
 
-                    float3 diffuseIBL = kd * pow(envDiffuse, 2.2) * albedoLinear / 3.1415;
-                    float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * pow(envSpecular, 2.2);
+                float3 IBL = diffuseIBL + specularIBL;
 
-                    float3 IBL = diffuseIBL + specularIBL;
-
-                    float4 color = float4(radiance * BRDF + IBL * ambientOcclusion, 1);
-                    
-                    return pow(color, 1.0 / 2.2);
-                }
-                // Unity Logic
-                else {
-                    float3 diffuseIBL = kd * envDiffuse * albedo / 3.1415;
-                    float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * envSpecular;
-
-                    float perceptualRoughness = SmoothnessToPerceptualRoughness (/*smoothness*/roughness);
-                    float sqRoughness = max(0.002, roughness * roughness);
-
-                    float D = SmithJointGGXVisibilityTerm(NdotL, NdotV, sqRoughness);
-                    float G = GGXTerm(NdotH, roughness);
-
-                    half diffuseTerm = DisneyDiffuseRe(NdotV, NdotL, LdotH, sqRoughness) * NdotL;
-                    half specularTerm = max(0, NdotL * G * D * 3.1415); // Torrance-Sparrow model, Fresnel is applied later
-                    half surfaceReduction = 1.0 / (sqRoughness*sqRoughness + 1.0);  
-                    float3 color = albedo * (diffuseIBL + radiance * diffuseTerm)
-                    + specularTerm * radiance * FresnelSchlick(LdotH, radiance)
-                    + surfaceReduction * specularIBL * FresnelSchlick(NdotV, radiance, sqRoughness);
-                    
-                    return float4(color, 1);
-                }
+                float4 color = float4(radiance * BRDF + IBL * ambientOcclusion, alpha);
+                
+                return pow(color, 1.0 / 2.2);
             }
             ENDCG
         }

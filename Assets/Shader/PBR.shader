@@ -28,6 +28,10 @@ Shader "Custom/PBR"
             #pragma vertex vert
             #pragma fragment frag
 
+            uniform int _PointLightCount;
+            uniform float4 _PointLightPosition[16];  // Array size should be large enough to hold all point lights
+            uniform float4 _PointLightColor[16];     // Array size should be large enough to hold all point lights
+
             sampler2D _Albedo;
             sampler2D _ARM;
             sampler2D _Normal;
@@ -153,7 +157,6 @@ Shader "Custom/PBR"
                 float NdotH = max(dot(normal, H), 0.0f);
                 float HdotV = max(dot(H, V), 0.0f);
                 float LdotH = max(dot(L, H), 0.0f);
-                float LdotV = max(dot(L, V), 0.0f);
                 
                 float3 F0 = lerp(0.04, albedo, metalness);
                 float F = FresnelSchlick(NdotV, F0);
@@ -174,14 +177,35 @@ Shader "Custom/PBR"
                 float3 diffuseBRDF = albedoLinear * kd / 3.1415;
                 float3 specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
 
-                float3 BRDF = (diffuseBRDF + specularBRDF) * NdotL * shadow;
+                float3 BRDF = radiance * (diffuseBRDF + specularBRDF) * NdotL * shadow;
+
+                float3 wpos = i.worldPos; // somehow I need to declare thisway, for block does not recognize i.worldPos as declared.
+                for (int i = 0; i < _PointLightCount; i++) 
+                {
+                    float3 lightPos = _PointLightPosition[i].xyz;
+                    float distanceToLight = length(lightPos- wpos);
+                    radiance = _PointLightColor[i].rgb / (0.0001 + distanceToLight * distanceToLight);
+                    L = normalize(lightPos - wpos);
+                    H = normalize(V + L);
+                    NdotL = max(dot(normal, L), 0.0f);
+                    NdotH = max(dot(normal, H), 0.0f);
+                    HdotV = max(dot(H, V), 0.0f);
+                    LdotH = max(dot(L, H), 0.0f);
+                    
+                    D = NdfGGX(NdotH, roughness);
+                    G = GaSchlickGGX(NdotL, NdotV, roughness);
+                    specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
+                    BRDF += (diffuseBRDF + specularBRDF) * radiance * NdotL;
+
+                    // return float4(_PointLightColor[i].rgb, 1.0);
+                }
 
                 float3 diffuseIBL = kd * pow(envDiffuse, 2.2) * albedoLinear / 3.1415;
                 float3 specularIBL = (F0 * BRDFLUT.x + BRDFLUT.y) * pow(envSpecular, 2.2);
 
                 float3 IBL = diffuseIBL + specularIBL;
 
-                float4 color = float4(radiance * BRDF + IBL * ambientOcclusion, alpha);
+                float4 color = float4(BRDF + IBL * ambientOcclusion, alpha);
                 
                 return pow(color, 1.0 / 2.2);
             }

@@ -129,15 +129,43 @@ Shader "Custom/PBR"
                 return lightScatter * viewScatter;
             }
 
+            float RayleighPhaseFunction(float fCos2)
+            {
+                return 3.0f / (16.0f * 3.1415) * (1.0f + fCos2);
+            }
+
+            float MiePhaseFunction(float g, float fCos)
+            {
+                return (1 - g)*(1 - g) / (4.0f*3.1415*pow(1 + g*g - 2.0f*g*fCos, 1.5f));
+            }
+
             float4 frag (v2f i) : SV_Target {
 
                 fixed shadow = SHADOW_ATTENUATION(i);
 
+                float3 worldPos = i.worldPos;
+                float3 lightPos = _WorldSpaceLightPos0.xyz;
 	            float3 radiance = _LightColor0;
-                float3 L = normalize(_WorldSpaceLightPos0.xyz);
-                float3 V = normalize(UnityWorldSpaceViewDir(i.worldPos));
-                float3 H = normalize(V + L);
-                float3 N = normalize(i.normal);
+                float distanceToLight = length(lightPos - worldPos);
+
+                // ray marching to reduce water color.
+                float3 raypos = worldPos;
+                float3 rayvec = normalize(lightPos - worldPos) * 5.0f;
+                float lightDecrease = 0.0f;
+                int j = 0;
+                for (j = 0; j < 64; j++) {
+                    if (raypos.y >= 0.0f) {
+                        break;
+                    }
+                    raypos += rayvec;
+                }
+                radiance.r *= exp(-0.100 * j);
+                radiance.g *= exp(-0.050 * j);
+
+                float3 L = normalize(lightPos); // Light Direction.
+                float3 V = normalize(UnityWorldSpaceViewDir(worldPos)); // View Direction.
+                float3 H = normalize(V + L); // Half Direction between Light and View.
+                float3 N = normalize(i.normal); // Normal Direction.
 	            float3 T = normalize(i.tangent);
                 float3 B = cross(N, T);
                 float3x3 TBN = float3x3(T, B, N);
@@ -179,13 +207,12 @@ Shader "Custom/PBR"
 
                 float3 BRDF = radiance * (diffuseBRDF + specularBRDF) * NdotL * shadow;
 
-                float3 wpos = i.worldPos; // somehow I need to declare thisway, for block does not recognize i.worldPos as declared.
-                for (int i = 0; i < _PointLightCount; i++) 
+                for (int k = 0; k < _PointLightCount; k++) 
                 {
-                    float3 lightPos = _PointLightPosition[i].xyz;
-                    float distanceToLight = length(lightPos- wpos);
-                    radiance = _PointLightColor[i].rgb / (0.0001 + distanceToLight * distanceToLight);
-                    L = normalize(lightPos - wpos);
+                    lightPos = _PointLightPosition[k].xyz;
+                    distanceToLight = length(lightPos - worldPos);
+                    radiance = _PointLightColor[k].rgb / (0.0001 + distanceToLight * distanceToLight);
+                    L = normalize(lightPos - worldPos);
                     H = normalize(V + L);
                     NdotL = max(dot(normal, L), 0.0f);
                     NdotH = max(dot(normal, H), 0.0f);
@@ -197,7 +224,7 @@ Shader "Custom/PBR"
                     specularBRDF = F * G * D / max(0.001, 4.0 * NdotL * NdotV);
                     BRDF += (diffuseBRDF + specularBRDF) * radiance * NdotL;
 
-                    // return float4(_PointLightColor[i].rgb, 1.0);
+                    // return float4(_PointLightColor[k].rgb, 1.0);
                 }
 
                 float3 diffuseIBL = kd * pow(envDiffuse, 2.2) * albedoLinear / 3.1415;

@@ -44,12 +44,12 @@ public class MainCamera : MonoBehaviour {
         CameraDistanceFromPlayer_meter += Input.mouseScrollDelta.y * (CameraDistanceFromPlayer_meter / 20.0f);
         CameraDistanceFromPlayer_meter = CameraDistanceFromPlayer_meter < 65 ? 65 : CameraDistanceFromPlayer_meter > 500 ? 500 : CameraDistanceFromPlayer_meter;
 
-        theSunLightComponent.GetComponent<Light>().intensity = LinearSaturate(1 + transform.position.y / 300, 0, 300);
-        theSunLightComponent.GetComponent<Light>().color = new Color(
-            /*R*/ LinearSaturate(1 + transform.position.y / 1, 0, 1),
-            /*G*/ LinearSaturate(1 + transform.position.y / 100, 0, 1),
-            /*B*/ LinearSaturate(1 + transform.position.y / 300, 1, 1)
-            );
+        //theSunLightComponent.GetComponent<Light>().intensity = LinearSaturate(1 + transform.position.y / 300, 0, 300);
+        //theSunLightComponent.GetComponent<Light>().color = new Color(
+        //    /*R*/ LinearSaturate(1 + transform.position.y / 1, 0, 1),
+        //    /*G*/ LinearSaturate(1 + transform.position.y / 100, 0, 1),
+        //    /*B*/ LinearSaturate(1 + transform.position.y / 300, 1, 1)
+        //    );
         RenderSettings.skybox.SetColor("_SkyTint", new Color(
             /*R*/ LinearSaturate(1 + transform.position.y / 0.1f, 1, 1),
             /*G*/ LinearSaturate(1 + transform.position.y / 0.1f, 1, 1),

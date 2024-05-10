@@ -13,7 +13,7 @@ public class PointLightManager : MonoBehaviour
     void Update()
     {
         pointLights = FindObjectsOfType<Light>().Where(light => light.type == LightType.Point).ToArray();
-        Debug.Log($"Number of point lights: {pointLights.Length}");
+        //Debug.Log($"Number of point lights: {pointLights.Length}");
         Shader.SetGlobalInteger("_PointLightCount", pointLights.Length);
         if (pointLights.Length > 0) {
             Shader.SetGlobalVectorArray("_PointLightPosition", pointLights.Select(light => {

@@ -6,14 +6,22 @@ Shader "Custom/PBR"
         _ARM ("AO Roughness Metalness (ARM)", 2D) = "white" {}
         _Normal ("Normal", 2D) = "white" {}
         _BRDF ("BRDF LUT", 2D) = "white" {}
+        
+        // Blending state
+        [HideInInspector] _Mode ("__mode", Float) = 0.0
+        [HideInInspector] _SrcBlend ("__src", Float) = 1.0
+        [HideInInspector] _DstBlend ("__dst", Float) = 0.0
+        [HideInInspector] _ZWrite ("__zw", Float) = 1.0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 100
         
         Pass {
             Tags { "LightMode" = "ForwardBase" }  // Use ForwardBase light mode
+
+            Blend [_SrcBlend] [_DstBlend]
+            ZWrite [_ZWrite]
 
             CGPROGRAM
             #pragma target 3.0
